@@ -166,14 +166,17 @@ def init_all_data():
         else:
             init_shift_types()
 
-        # 初始化医生和用户数据
-        from scripts.data.database_init_data import init_doctors, init_users
-        init_doctors()
-        init_users()
-
-        # 初始化节假日数据
+        # 初始化节假日数据（优先级1：基础配置）
         from scripts.data.holidays_init_data import check_holidays_data
         check_holidays_data()
+
+        # 初始化医生数据（优先级2：业务数据）
+        from scripts.data.doctors_init_data import init_doctors
+        init_doctors()
+
+        # 初始化用户数据（优先级3：用户数据，依赖于医生数据）
+        from scripts.data.users_init_data import init_users
+        init_users()
 
         print("基础数据初始化完成!")
 

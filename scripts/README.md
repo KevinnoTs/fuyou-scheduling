@@ -7,9 +7,10 @@
 ```
 scripts/
 ├── data/                    # 数据相关脚本
-│   ├── database_init_data.py    # 医生和用户数据初始化
 │   ├── holidays_init_data.py    # 节假日数据初始化
-│   └── export_data.py           # 数据导出工具
+│   ├── doctors_init_data.py     # 医生数据初始化
+│   ├── users_init_data.py       # 用户数据初始化
+│   └── export_data.py           # 数据导出工具（分别导出三个文件）
 ├── maintenance/            # 维护相关脚本
 │   ├── reset_database.py       # 数据库重置工具
 │   └── reset_annual_leave.py   # 年假重置工具
@@ -25,7 +26,7 @@ scripts/
 
 #### 1. 医生和用户数据初始化
 ```bash
-python scripts/data/database_init_data.py
+python scripts/data/doctors_init_data.py
 ```
 - **用途：** 初始化医生数据和对应的用户账户
 - **包含：** 冉佩入、李世珍、李文娟等真实医生数据
@@ -91,9 +92,12 @@ python scripts/utils/download_fonts.py
 python scripts/maintenance/reset_database.py
 
 # 2. 导入真实医生数据
-python scripts/data/database_init_data.py
+python scripts/data/doctors_init_data.py
 
-# 3. 初始化节假日数据（可选，通常自动完成）
+# 3. 导入用户数据（依赖医生数据）
+python scripts/data/users_init_data.py
+
+# 4. 初始化节假日数据（可选，通常自动完成）
 python scripts/data/holidays_init_data.py
 ```
 
@@ -110,7 +114,7 @@ python scripts/data/holidays_init_data.py
 ```bash
 # 快速初始化开发环境
 python scripts/maintenance/reset_database.py
-python scripts/data/database_init_data.py
+python scripts/data/doctors_init_data.py
 ```
 
 ### 数据备份

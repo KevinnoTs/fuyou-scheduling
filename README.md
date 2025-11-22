@@ -97,9 +97,10 @@ fuyou_scheduling/
 │   └── static/           # 静态文件
 ├── scripts/               # 脚本工具目录
 │   ├── data/            # 数据相关脚本
-│   │   ├── database_init_data.py  # 医生数据初始化
 │   │   ├── holidays_init_data.py  # 节假日初始化
-│   │   └── export_data.py         # 数据导出
+│   │   ├── doctors_init_data.py   # 医生数据初始化
+│   │   ├── users_init_data.py     # 用户数据初始化
+│   │   └── export_data.py         # 数据导出（分别导出）
 │   ├── maintenance/     # 维护脚本
 │   │   ├── reset_database.py     # 数据库重置
 │   │   └── reset_annual_leave.py # 年假重置
@@ -119,13 +120,16 @@ fuyou_scheduling/
 
 #### 数据管理
 ```bash
-# 初始化医生数据
-python scripts/data/database_init_data.py
-
-# 初始化节假日数据
+# 初始化节假日数据（优先级1）
 python scripts/data/holidays_init_data.py
 
-# 导出当前数据
+# 初始化医生数据（优先级2）
+python scripts/data/doctors_init_data.py
+
+# 初始化用户数据（优先级3，依赖医生数据）
+python scripts/data/users_init_data.py
+
+# 导出当前数据为分离的文件
 python scripts/data/export_data.py
 ```
 
