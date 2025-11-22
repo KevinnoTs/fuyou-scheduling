@@ -166,7 +166,10 @@ def init_all_data():
         else:
             init_shift_types()
 
-        # 医生数据初始化已移除 - 请使用 scripts/data/database_init_data.py
+        # 初始化医生和用户数据
+        from scripts.data.database_init_data import init_doctors, init_users
+        init_doctors()
+        init_users()
 
         # 初始化节假日数据
         from scripts.data.holidays_init_data import check_holidays_data
