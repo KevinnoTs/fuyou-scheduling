@@ -88,19 +88,57 @@ fuyou_scheduling/
 │   ├── routes.py          # 主要路由
 │   ├── auth_routes.py     # 认证路由
 │   ├── extensions.py      # 扩展配置
-│   ├── init_data.py       # 数据初始化
+│   ├── init_data.py       # 基础数据初始化
 │   ├── templates/         # 模板文件
 │   │   ├── layouts/      # 页面布局
 │   │   ├── auth/         # 认证页面
 │   │   ├── users/        # 用户管理
 │   │   └── doctors/      # 医生管理
 │   └── static/           # 静态文件
+├── scripts/               # 脚本工具目录
+│   ├── data/            # 数据相关脚本
+│   │   ├── database_init_data.py  # 医生数据初始化
+│   │   ├── holidays_init_data.py  # 节假日初始化
+│   │   └── export_data.py         # 数据导出
+│   ├── maintenance/     # 维护脚本
+│   │   ├── reset_database.py     # 数据库重置
+│   │   └── reset_annual_leave.py # 年假重置
+│   └── utils/           # 工具脚本
+│       ├── check_syntax.py       # 语法检查
+│       └── download_fonts.py     # 字体下载
 ├── instance/              # 数据库文件
 ├── logs/                 # 日志文件
 ├── run.py               # 启动文件
 ├── requirements.txt      # Python依赖
 └── README.md            # 说明文档
 ```
+
+### 脚本使用
+
+项目包含完整的脚本工具集，用于数据管理和系统维护：
+
+#### 数据管理
+```bash
+# 初始化医生数据
+python scripts/data/database_init_data.py
+
+# 初始化节假日数据
+python scripts/data/holidays_init_data.py
+
+# 导出当前数据
+python scripts/data/export_data.py
+```
+
+#### 系统维护
+```bash
+# 完全重置数据库
+python scripts/maintenance/reset_database.py
+
+# 重置年假（每年执行一次）
+python scripts/maintenance/reset_annual_leave.py
+```
+
+详细说明请参考 [scripts/README.md](scripts/README.md)
 
 ## 默认账户
 

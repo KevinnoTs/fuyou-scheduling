@@ -166,10 +166,10 @@ def init_all_data():
         else:
             init_shift_types()
 
-        # 医生数据初始化已移除 - 请使用根目录的 database_init_data.py
+        # 医生数据初始化已移除 - 请使用 scripts/data/database_init_data.py
 
         # 初始化节假日数据
-        from app.holidays_init_data import check_holidays_data
+        from scripts.data.holidays_init_data import check_holidays_data
         check_holidays_data()
 
         print("基础数据初始化完成!")
