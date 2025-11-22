@@ -10,14 +10,34 @@ import json
 from datetime import datetime
 
 # 添加项目根目录到Python路径
-# 从scripts/data/export_data.py回溯到项目根目录
-current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.dirname(current_dir)
+# 从 scripts/data/export_data.py 需要向上两级到项目根目录
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
 
-from app import create_app
-from app.extensions import db
-from app.models import Doctor, User, Holiday
+# 额外确保路径正确（如果计算有误）
+if not os.path.exists(os.path.join(project_root, 'app')):
+    # 如果计算有误，手动设置路径
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    while 'app' not in os.listdir(project_root):
+        # 继续向上查找直到找到包含app目录的父目录
+        project_root = os.path.dirname(project_root)
+        if project_root == os.path.dirname(project_root):  # 避免无限循环
+            break
+    sys.path.insert(0, project_root)
+
+# 简化导入，先测试路径是否正确
+try:
+    from app import create_app
+    from app.extensions import db
+    from app.models import Doctor, User, Holiday
+except ImportError as e:
+    print(f"❌ 导入失败: {e}")
+    print(f"📁 当前路径: {os.getcwd()}")
+    print(f"🔧 项目根目录: {project_root}")
+    print(f"📋 sys.path: {sys.path}")
+    print("\n💡 尝试手动添加路径:")
+    print(f"   sys.path.append(r'{project_root}')")
+    sys.exit(1)
 
 def export_all_data():
     """导出所有数据为分离的初始化脚本"""
