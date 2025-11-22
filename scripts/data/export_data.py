@@ -19,26 +19,32 @@ from app.models import Doctor, User, Holiday
 
 def export_all_data():
     """导出所有数据为分离的初始化脚本"""
-    app = create_app()
+    print("🔄 开始导出数据库数据...")
+    print(f"📍 项目根目录: {project_root}")
 
-    with app.app_context():
-        print("🔄 开始导出数据库数据...")
-        print("=" * 60)
+    try:
+        app = create_app()
+        with app.app_context():
+            print("=" * 60)
 
-        # 导出节假日数据
-        export_holidays_data()
+            # 导出节假日数据
+            export_holidays_data()
 
-        # 导出医生数据
-        export_doctors_data()
+            # 导出医生数据
+            export_doctors_data()
 
-        # 导出用户数据
-        export_users_data()
+            # 导出用户数据
+            export_users_data()
 
-        print("\n✅ 所有数据导出完成!")
-        print("📁 生成的文件:")
-        print("   - holidays_init_data.py  (节假日数据)")
-        print("   - doctors_init_data.py   (医生数据)")
-        print("   - users_init_data.py     (用户数据)")
+            print("\n✅ 所有数据导出完成!")
+            print("📁 生成的文件:")
+            print("   - holidays_init_data.py  (节假日数据)")
+            print("   - doctors_init_data.py   (医生数据)")
+            print("   - users_init_data.py     (用户数据)")
+    except Exception as e:
+        print(f"❌ 导出失败: {e}")
+        import traceback
+        traceback.print_exc()
 
 def export_holidays_data():
     """导出节假日数据为初始化脚本"""
@@ -212,11 +218,12 @@ def generate_holidays_init_file(holidays, years):
     init_code.append('    with app.app_context():')
     init_code.append('        check_holidays_data()')
 
-    # 写入文件
-    with open(output_file, 'w', encoding='utf-8') as f:
+    # 写入文件到项目根目录
+    output_path = os.path.join(project_root, output_file)
+    with open(output_path, 'w', encoding='utf-8') as f:
         f.write('\n'.join(init_code))
 
-    print(f"   ✅ 节假日数据已导出到: {output_file}")
+    print(f"   ✅ 节假日数据已导出到: {output_path}")
 
 def generate_doctors_init_file(doctors):
     """生成医生初始化脚本"""
@@ -302,11 +309,12 @@ def generate_doctors_init_file(doctors):
     init_code.append('    with app.app_context():')
     init_code.append('        init_doctors()')
 
-    # 写入文件
-    with open(output_file, 'w', encoding='utf-8') as f:
+    # 写入文件到项目根目录
+    output_path = os.path.join(project_root, output_file)
+    with open(output_path, 'w', encoding='utf-8') as f:
         f.write('\n'.join(init_code))
 
-    print(f"   ✅ 医生数据已导出到: {output_file}")
+    print(f"   ✅ 医生数据已导出到: {output_path}")
 
 def generate_users_init_file(users):
     """生成用户初始化脚本"""
@@ -394,11 +402,12 @@ def generate_users_init_file(users):
     init_code.append('    with app.app_context():')
     init_code.append('        init_users()')
 
-    # 写入文件
-    with open(output_file, 'w', encoding='utf-8') as f:
+    # 写入文件到项目根目录
+    output_path = os.path.join(project_root, output_file)
+    with open(output_path, 'w', encoding='utf-8') as f:
         f.write('\n'.join(init_code))
 
-    print(f"   ✅ 用户数据已导出到: {output_file}")
+    print(f"   ✅ 用户数据已导出到: {output_path}")
 
 if __name__ == "__main__":
     export_all_data()
