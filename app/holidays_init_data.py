@@ -35,8 +35,15 @@
 - 调休：6天
 """
 
+import os
+import sys
 from datetime import date
 import sqlalchemy as sa
+
+# 添加项目根目录到Python路径
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from app import create_app
 from app.extensions import db
 from app.models import Holiday
 
@@ -227,4 +234,7 @@ def check_holidays_data():
         return False
 
 if __name__ == "__main__":
-    check_holidays_data()
+    # 创建Flask应用并初始化数据库上下文
+    app = create_app()
+    with app.app_context():
+        check_holidays_data()
