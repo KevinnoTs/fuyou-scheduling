@@ -6,11 +6,11 @@ def create_app():
     app = Flask(__name__)
 
     # 配置
-    app.config['SECRET_KEY'] = 'hospital-scheduling-secret-key-2024'
+    app.config['SECRET_KEY'] = 'fuyou-scheduling-secret-key-2024'
 
     # 数据库配置 - 使用SQLite
     basedir = path.abspath(path.dirname(__file__))
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{path.join(basedir, "..", "instance", "hospital.db")}'
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{path.join(basedir, "..", "instance", "fuyou.db")}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # 文件上传配置
@@ -194,7 +194,7 @@ def create_app():
         doctors = Doctor.query.all()
 
         print("\n" + "="*50)
-        print("Hospital Scheduling System - Current Data Status")
+        print("Fuyou Scheduling System - Current Data Status")
         print("="*50)
         print(f"Total doctors: {len(doctors)}")
 
