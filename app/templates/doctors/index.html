@@ -1,0 +1,292 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}医生管理 - 医院排班管理系统{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        <i class="bi bi-people text-primary"></i>
+        医生管理
+    </h1>
+    <!-- 添加医生按钮 - 只有管理员和超级管理员可以看到 -->
+    {% if current_user.is_authenticated and (current_user.is_admin or current_user.is_super_admin) %}
+    <a href="{{ url_for('main.add_doctor') }}" class="btn btn-primary text-white">
+        <i class="bi bi-plus-circle"></i> 添加医生
+    </a>
+    {% endif %}
+</div>
+
+<!-- 搜索框 -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-10">
+                <input type="text" class="form-control" name="search"
+                       placeholder="搜索医生姓名..." value="{{ search }}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary text-white w-100">
+                    <i class="bi bi-search"></i> 搜索
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 医生列表 -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">医生列表 (共 {{ doctors.total }} 人)</h5>
+    </div>
+    <div class="card-body">
+        {% if doctors.items %}
+            <!-- 桌面端显示 -->
+            <div class="table-responsive d-none d-md-block">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="80">头像</th>
+                            <th>姓名</th>
+                            <th>性别</th>
+                            <th>职称</th>
+                            <th>状态</th>
+                            <th>擅长方向</th>
+                            {% if current_user.is_authenticated and (current_user.is_admin or current_user.is_super_admin or current_user.associated_doctor_id) %}
+                            <th>剩余年假</th>
+                            {% endif %}
+                            <th width="180">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for doctor in doctors.items %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('main.view_doctor', doctor_id=doctor.id) }}"
+                                       class="text-decoration-none d-inline-block"
+                                       title="查看 {{ doctor.name }} 的详情">
+                                        <img src="{{ doctor.get_avatar_url() }}"
+                                             alt="{{ doctor.name }}"
+                                             class="rounded-circle avatar-thumb hover-scale"
+                                             width="50" height="50"
+                                             style="transition: transform 0.2s ease-in-out;">
+                                    </a>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('main.view_doctor', doctor_id=doctor.id) }}"
+                                       class="text-decoration-none fw-bold text-primary"
+                                       title="查看 {{ doctor.name }} 的详情">
+                                        {{ doctor.name }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'primary' if doctor.gender == '男' else 'danger' }}">
+                                        {{ doctor.gender }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ doctor.title or '打字员' }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if (doctor.status or '在职') == '在职' else 'secondary' }}">
+                                        {{ doctor.status or '在职' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% for specialty in doctor.get_specialties_list() %}
+                                        <span class="badge bg-secondary me-1">{{ specialty }}</span>
+                                    {% endfor %}
+                                </td>
+                                    {% if current_user.is_authenticated and (current_user.is_admin or current_user.is_super_admin or current_user.associated_doctor_id) %}
+                                <td>
+                                    {% if current_user.can_view_leave_info(doctor.id) %}
+                                        <span class="text-{{ 'success' if (doctor.annual_leave_days - doctor.used_leave_days) > 0 else 'danger' }}">
+                                            {{ doctor.annual_leave_days - doctor.used_leave_days }}/{{ doctor.annual_leave_days }} 天
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            {% endif %}
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <!-- 查看按钮 - 所有用户（包括未登录）都可以看到 -->
+                                        <a href="{{ url_for('main.view_doctor', doctor_id=doctor.id) }}"
+                                           class="btn btn-sm btn-info text-white" title="查看详情">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+
+                                        <!-- 编辑按钮 - 普通用户只能编辑关联医生，管理员可编辑所有医生 -->
+                                        {% if current_user.is_authenticated and current_user.can_edit_doctor_info(doctor.id) %}
+                                        <a href="{{ url_for('main.edit_doctor', doctor_id=doctor.id) }}"
+                                           class="btn btn-sm btn-warning text-white" title="编辑">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        {% endif %}
+
+                                        <!-- 删除按钮 - 只有超级管理员可以看到 -->
+                                        {% if current_user.is_authenticated and current_user.is_super_admin %}
+                                        <button type="button" class="btn btn-sm btn-danger text-white" title="删除"
+                                                onclick="confirmDeleteDoctor({{ doctor.id }}, '{{ doctor.name }}')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 移动端显示 -->
+            <div class="d-md-none">
+                {% for doctor in doctors.items %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-3">
+                                    <a href="{{ url_for('main.view_doctor', doctor_id=doctor.id) }}"
+                                       class="text-decoration-none d-block"
+                                       title="查看 {{ doctor.name }} 的详情">
+                                        <img src="{{ doctor.get_avatar_url() }}"
+                                             alt="{{ doctor.name }}"
+                                             class="rounded-circle w-100 hover-scale"
+                                             style="transition: transform 0.2s ease-in-out;">
+                                    </a>
+                                </div>
+                                <div class="col-9">
+                                    <h6 class="mb-1">
+                                        <a href="{{ url_for('main.view_doctor', doctor_id=doctor.id) }}"
+                                           class="text-decoration-none text-primary fw-bold"
+                                           title="查看 {{ doctor.name }} 的详情">
+                                            {{ doctor.name }}
+                                        </a>
+                                    </h6>
+                                    <div class="mb-2">
+                                        <span class="badge bg-{{ 'primary' if doctor.gender == '男' else 'danger' }} me-1">
+                                            {{ doctor.gender }}
+                                        </span>
+                                        <span class="badge bg-info me-1">{{ doctor.title or '打字员' }}</span>
+                                        <span class="badge bg-{{ 'success' if (doctor.status or '在职') == '在职' else 'secondary' }} me-1">
+                                            {{ doctor.status or '在职' }}
+                                        </span>
+                                    </div>
+                                    <p class="mb-2">
+                                        {% for specialty in doctor.get_specialties_list() %}
+                                            <span class="badge bg-secondary me-1">{{ specialty }}</span>
+                                        {% endfor %}
+                                    </p>
+                                    {% if current_user.is_authenticated and current_user.can_view_leave_info(doctor.id) %}
+                                    <small class="text-muted">
+                                        <i class="bi bi-calendar-check"></i> 剩余年假: <span class="text-{{ 'success' if (doctor.annual_leave_days - doctor.used_leave_days) > 0 else 'danger' }}">{{ doctor.annual_leave_days - doctor.used_leave_days }}/{{ doctor.annual_leave_days }}天</span>
+                                    </small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="mt-3 d-flex gap-2">
+                                <!-- 查看按钮 - 所有用户（包括未登录）都可以看到 -->
+                                <a href="{{ url_for('main.view_doctor', doctor_id=doctor.id) }}" class="btn btn-sm btn-info text-white flex-fill">查看</a>
+
+                                <!-- 编辑按钮 - 普通用户只能编辑关联医生，管理员可编辑所有医生 -->
+                                {% if current_user.is_authenticated and current_user.can_edit_doctor_info(doctor.id) %}
+                                <a href="{{ url_for('main.edit_doctor', doctor_id=doctor.id) }}" class="btn btn-sm btn-warning text-white flex-fill">编辑</a>
+                                {% endif %}
+
+                                <!-- 删除按钮 - 只有超级管理员可以看到 -->
+                                {% if current_user.is_authenticated and current_user.is_super_admin %}
+                                <form method="POST" action="{{ url_for('main.delete_doctor', doctor_id=doctor.id) }}"
+                                      style="display: inline; width: 100%;"
+                                      onsubmit="return confirm('确定要删除医生 {{ doctor.name }} 吗？此操作不可撤销！');">
+                                    <button type="submit" class="btn btn-sm btn-danger text-white flex-fill">
+                                        删除
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-people display-1 text-muted"></i>
+                <p class="mt-3 text-muted">
+                    {% if search %}
+                        没有找到包含 "{{ search }}" 的医生
+                    {% else %}
+                        暂无医生数据
+                    {% endif %}
+                </p>
+                <!-- 添加第一个医生按钮 - 只有管理员和超级管理员可以看到 -->
+                {% if current_user.is_authenticated and (current_user.is_admin or current_user.is_super_admin) %}
+                <a href="{{ url_for('main.add_doctor') }}" class="btn btn-primary text-white">
+                    <i class="bi bi-plus-circle"></i> 添加第一个医生
+                </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 分页 -->
+{% if doctors.pages > 1 %}
+    <nav aria-label="医生列表分页" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if doctors.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.doctors', page=doctors.prev_num, search=search) }}">
+                        <i class="bi bi-chevron-left"></i> 上一页
+                    </a>
+                </li>
+            {% endif %}
+
+            {% for page_num in doctors.iter_pages() %}
+                {% if page_num %}
+                    {% if page_num != doctors.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('main.doctors', page=page_num, search=search) }}">
+                                {{ page_num }}
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                    {% endif %}
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if doctors.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.doctors', page=doctors.next_num, search=search) }}">
+                        下一页 <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+{% endif %}
+
+<script>
+function confirmDeleteDoctor(doctorId, doctorName) {
+    window.GlobalModal.confirm(
+        `确定要删除医生 ${doctorName} 吗？此操作不可撤销！`,
+        '确认删除',
+        function() {
+            // 用户确认，执行删除
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/doctors/delete/${doctorId}`;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    );
+}
+</script>
+{% endblock %}
+
+

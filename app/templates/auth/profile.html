@@ -1,0 +1,174 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}个人资料 - 医院排班管理系统{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <!-- 左侧：用户信息 -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-circle"></i>
+                        个人资料
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- 编辑按钮 -->
+                    <div class="d-flex justify-content-end mb-3">
+                        <a href="{{ url_for('main.edit_user', user_id=current_user.id) }}" class="btn btn-outline-primary">
+                            <i class="bi bi-pencil"></i> 编辑个人资料
+                        </a>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 text-center mb-4">
+                            <div class="avatar-display">
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                                     style="width: 120px; height: 120px; margin: 0 auto; font-size: 48px;">
+                                    <i class="bi bi-person"></i>
+                                </div>
+                                {% if current_user.is_super_admin %}
+                                <span class="badge mt-2 me-1" style="background-color: #ffd0a6; color: #000;">
+                                    超级管理员
+                                </span>
+                                {% elif current_user.is_admin %}
+                                <span class="badge mt-2" style="background-color: #ffcdc7; color: #000;">
+                                    管理员
+                                </span>
+                                {% else %}
+                                <span class="badge mt-2" style="background-color: #fce9da; color: #000;">
+                                    普通用户
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td width="100" class="text-muted">用户名：</td>
+                                    <td><strong>{{ current_user.username }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">姓名：</td>
+                                    <td>{{ current_user.full_name or '未设置' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">账户类型：</td>
+                                    <td>
+                                        {% if current_user.is_super_admin %}
+                                            <span class="badge" style="background-color: #ffd0a6; color: #000;">超级管理员</span>
+                                        {% elif current_user.is_admin %}
+                                            <span class="badge" style="background-color: #ffcdc7; color: #000;">管理员</span>
+                                        {% else %}
+                                            <span class="badge" style="background-color: #fce9da; color: #000;">普通用户</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">状态：</td>
+                                    <td>
+                                        {% if current_user.is_active %}
+                                            <span class="badge" style="background-color: #b3bf86; color: #fff;">正常</span>
+                                        {% else %}
+                                            <span class="badge" style="background-color: #c4c3be; color: #fff;">已禁用</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">注册时间：</td>
+                                    <td>{{ current_user.created_at.strftime('%Y年%m月%d日 %H:%M') }}</td>
+                                </tr>
+                                {% if current_user.last_login %}
+                                <tr>
+                                    <td class="text-muted">最后登录：</td>
+                                    <td>{{ current_user.last_login.strftime('%Y年%m月%d日 %H:%M') }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：快捷操作 -->
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightning"></i>
+                        快捷操作
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('main.doctors') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-people"></i> 医生管理
+                        </a>
+                        {% if current_user.is_admin %}
+                        <button class="btn btn-outline-warning" disabled>
+                            <i class="bi bi-gear"></i> 系统设置
+                            <small class="d-block text-muted">功能开发中</small>
+                        </button>
+                        {% endif %}
+                        <hr class="my-2">
+                        <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger">
+                            <i class="bi bi-box-arrow-right"></i> 退出登录
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 权限说明 -->
+            <div class="card shadow-sm mt-3">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-shield-check"></i>
+                        权限说明
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if current_user.is_super_admin %}
+                        <p class="small text-muted mb-2">
+                            <i class="bi bi-gear-fill text-danger"></i>
+                            <strong>超级管理员权限：</strong>拥有系统最高权限
+                        </p>
+                        <ul class="small text-muted mb-0">
+                            <li>管理所有用户（包括管理员）</li>
+                            <li>修改任何用户密码</li>
+                            <li>医生管理的所有功能</li>
+                            <li>排班和统计功能</li>
+                        </ul>
+                    {% elif current_user.is_admin %}
+                        <p class="small text-muted mb-2">
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <strong>管理员权限：</strong>可以管理医生和排班
+                        </p>
+                        <ul class="small text-muted mb-0">
+                            <li>添加、编辑、删除医生</li>
+                            <li>管理年假和工作统计</li>
+                            <li>排班管理功能</li>
+                            <li>管理普通用户</li>
+                        </ul>
+                    {% else %}
+                        <p class="small text-muted mb-2">
+                            <i class="bi bi-person-fill text-info"></i>
+                            <strong>普通用户权限：</strong>基础查看和编辑功能
+                        </p>
+                        <ul class="small text-muted mb-0">
+                            <li>查看医生信息</li>
+                            <li>查看排班信息</li>
+                            <li>修改个人资料和密码</li>
+                            {% if current_user.associated_doctor %}
+                            <li>编辑关联医生的头像</li>
+                            {% endif %}
+                        </ul>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

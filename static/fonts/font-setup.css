@@ -1,0 +1,171 @@
+/*
+ * 霞鹜新晰黑字体配置
+ * 项目地址: https://github.com/lxgw/LxgwNeoXiHei
+ *
+ * 下载指南:
+ * 1. 访问项目地址: https://github.com/lxgw/LxgwNeoXiHei
+ * 2. 下载最新版本的字体文件 (LXGWWenKai-Regular.ttf 或 LXGWWenKai-Bold.ttf)
+ * 3. 将字体文件放在此目录下: static/fonts/
+ * 4. 确保文件名与下面的 @font-face 中的文件名一致
+ */
+
+/* 常规字体 */
+@font-face {
+  font-family: 'LXGWNeoXiHei';
+  font-style: normal;
+  font-weight: normal;
+  src: local('LXGWNeoXiHei Regular'),
+       local('LXGWWenKai-Regular'),
+       url('LXGWWenKai-Regular.ttf') format('truetype'),
+       url('LXGWWenKai-Regular.woff2') format('woff2');
+  font-display: swap;
+}
+
+/* 粗体字体 */
+@font-face {
+  font-family: 'LXGWNeoXiHei';
+  font-style: normal;
+  font-weight: bold;
+  src: local('LXGWNeoXiHei Bold'),
+       local('LXGWWenKai-Bold'),
+       url('LXGWWenKai-Bold.ttf') format('truetype'),
+       url('LXGWWenKai-Bold.woff2') format('woff2');
+  font-display: swap;
+}
+
+/* 全局字体设置 */
+:root {
+  --font-family-base: 'LXGWNeoXiHei', 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', 'Source Han Sans SC', sans-serif;
+  --font-family-monospace: 'JetBrains Mono', 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+/* 全局应用字体 */
+body {
+  font-family: var(--font-family-base);
+  font-weight: normal;
+  line-height: 1.6;
+}
+
+/* 标题字体 */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family-base);
+  font-weight: bold;
+}
+
+/* 粗体文本 */
+b, strong {
+  font-family: var(--font-family-base);
+  font-weight: bold;
+}
+
+/* 表单元素 */
+input, textarea, select, button {
+  font-family: var(--font-family-base);
+}
+
+/* 代码块字体 */
+code, pre, .font-monospace {
+  font-family: var(--font-family-monospace);
+}
+
+/* 特殊元素字体优化 */
+.badge, .btn, .card, .table {
+  font-family: var(--font-family-base);
+}
+
+/* 导航和菜单 */
+.navbar, .sidebar, .menu {
+  font-family: var(--font-family-base);
+}
+
+/* 表格优化 */
+.table th, .table td {
+  font-family: var(--font-family-base);
+}
+
+/* 表单优化 */
+.form-label, .form-control {
+  font-family: var(--font-family-base);
+}
+
+/* 按钮优化 */
+.btn {
+  font-family: var(--font-family-base);
+  font-weight: 500;
+}
+
+/* 卡片和面板 */
+.card, .panel {
+  font-family: var(--font-family-base);
+}
+
+/* 模态框 */
+.modal {
+  font-family: var(--font-family-base);
+}
+
+/* 提示信息 */
+.alert, .toast {
+  font-family: var(--font-family-base);
+}
+
+/* 下拉菜单 */
+.dropdown-menu {
+  font-family: var(--font-family-base);
+}
+
+/* 分页 */
+.pagination {
+  font-family: var(--font-family-base);
+}
+
+/* 表单验证反馈 */
+.invalid-feedback, .valid-feedback {
+  font-family: var(--font-family-base);
+}
+
+/* 工具提示 */
+.tooltip {
+  font-family: var(--font-family-base);
+}
+
+/* 图标与文字结合 */
+i + span, span + i {
+  font-family: var(--font-family-base);
+}
+
+/* 特殊场景优化 */
+.small, .text-small {
+  font-family: var(--font-family-base);
+}
+
+.large, .text-large {
+  font-family: var(--font-family-base);
+}
+
+/* 字体加载优化 */
+.font-loading {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.font-loaded {
+  opacity: 1;
+}
+
+/* 移动端优化 */
+@media (max-width: 768px) {
+  body {
+    font-family: var(--font-family-base);
+    font-size: 14px;
+  }
+}
+
+/* 高分辨率屏幕优化 */
+@media (min-resolution: 2dppx) {
+  body {
+    font-family: var(--font-family-base);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}

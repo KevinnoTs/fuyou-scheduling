@@ -1,0 +1,155 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}关联医生 - 用户管理{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- 页面标题 -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="fas fa-user-md"></i>
+            关联医生 - {{ user.username }}
+        </h2>
+        <a href="{{ url_for('main.users') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i>
+            返回用户列表
+        </a>
+    </div>
+
+    <!-- 用户信息卡片 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h6 class="mb-0">用户信息</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>用户名：</strong>{{ user.username }}</p>
+                    <p><strong>全名：</strong>{{ user.full_name or '未设置' }}</p>
+                    <p><strong>当前关联：</strong>
+                        {% if user.associated_doctor %}
+                            <span class="badge" style="background-color: #c6e0fb; color: #000;">{{ user.associated_doctor.name }}</span>
+                        {% else %}
+                            <span class="badge" style="background-color: #e9ecef; color: #6c757d;">未关联</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>角色：</strong>
+                        {% if user.is_super_admin %}
+                            <span class="badge" style="background-color: #ffd0a6; color: #000;">超级管理员</span>
+                        {% elif user.is_admin %}
+                            <span class="badge" style="background-color: #ffcdc7; color: #000;">管理员</span>
+                        {% else %}
+                            <span class="badge" style="background-color: #fce9da; color: #000;">普通用户</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>状态：</strong>
+                        {% if user.is_active %}
+                            <span class="badge" style="background-color: #b3bf86; color: #fff;">正常</span>
+                        {% else %}
+                            <span class="badge" style="background-color: #c4c3be; color: #fff;">已禁用</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 关联医生表单 -->
+    <div class="card">
+        <div class="card-header">
+            <h6 class="mb-0">医生关联管理</h6>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="mb-4">
+                    <label for="doctor_id" class="form-label">选择关联医生：</label>
+                    <select class="form-select" id="doctor_id" name="doctor_id">
+                        <option value="">请选择医生</option>
+                        {% for doctor in doctors %}
+                            <option value="{{ doctor.id }}"
+                                {% if user.associated_doctor and user.associated_doctor.id == doctor.id %}
+                                    selected
+                                {% endif %}>
+                                {{ doctor.name }} - {{ doctor.get_specialties_display() }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    {% if not doctors %}
+                        <div class="form-text text-danger">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            暂无医生数据，请先添加医生
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="d-flex gap-2">
+                    {% if user.associated_doctor %}
+                        <!-- 取消关联按钮 -->
+                        <button type="submit" name="action" value="dissociate"
+                                class="btn btn-warning"
+                                onclick="return confirm('确定要取消该用户与医生的关联吗？')">
+                            <i class="fas fa-unlink"></i>
+                            取消关联
+                        </button>
+
+                        <!-- 重新关联按钮 -->
+                        <button type="submit" name="action" value="associate"
+                                class="btn btn-primary"
+                                {% if not doctors %}disabled{% endif %}>
+                            <i class="fas fa-exchange-alt"></i>
+                            更换关联
+                        </button>
+                    {% else %}
+                        <!-- 建立关联按钮 -->
+                        <button type="submit" name="action" value="associate"
+                                class="btn btn-primary"
+                                {% if not doctors %}disabled{% endif %}>
+                            <i class="fas fa-link"></i>
+                            建立关联
+                        </button>
+                    {% endif %}
+
+                    <a href="{{ url_for('main.users') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times"></i>
+                        取消
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 权限说明 -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h6 class="mb-0">
+                <i class="fas fa-info-circle"></i>
+                权限说明
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>关联用户权限：</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success"></i> 可以编辑关联医生的头像</li>
+                        <li><i class="fas fa-times text-danger"></i> 不能修改医生基本信息</li>
+                        <li><i class="fas fa-times text-danger"></i> 不能修改擅长方向</li>
+                        <li><i class="fas fa-times text-danger"></i> 不能修改年假信息</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6>管理员权限：</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success"></i> 可以修改所有医生信息</li>
+                        <li><i class="fas fa-check text-success"></i> 可以管理用户关联</li>
+                        <li><i class="fas fa-check text-success"></i> 可以添加/删除医生</li>
+                        <li><i class="fas fa-check text-success"></i> 可以排班管理</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

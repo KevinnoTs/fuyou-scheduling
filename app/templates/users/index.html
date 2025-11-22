@@ -1,0 +1,280 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}用户管理 - 医院排班管理系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面头部 -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="bi bi-people-fill text-primary"></i>
+            用户管理
+        </h1>
+    </div>
+
+    <!-- 搜索框 -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-10">
+                    <input type="text" class="form-control" name="search"
+                           placeholder="搜索用户名或姓名..." value="{{ search }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary text-white w-100">
+                        <i class="bi bi-search"></i> 搜索
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 用户列表 -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            {% if users.items %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>用户名</th>
+                            <th>姓名</th>
+                            <th>角色</th>
+                            <th>状态</th>
+                            <th>医生关联</th>
+                            <th>注册时间</th>
+                            <th>最后登录</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users.items %}
+                        <tr>
+                            <td>
+                                <strong>{{ user.username }}</strong>
+                                {% if user.id == current_user.id %}
+                                <span class="text-info ms-1">(当前用户)</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.full_name or '-' }}</td>
+                            <td>
+                                {% if user.is_super_admin %}
+                                    <span class="badge" style="background-color: #ffd0a6; color: #000;">超级管理员</span>
+                                {% elif user.is_admin %}
+                                    <span class="badge" style="background-color: #ffcdc7; color: #000;">管理员</span>
+                                {% else %}
+                                    <span class="badge" style="background-color: #fce9da; color: #000;">普通用户</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.is_active %}
+                                    <span class="badge" style="background-color: #b3bf86; color: #fff;">正常</span>
+                                {% else %}
+                                    <span class="badge" style="background-color: #c4c3be; color: #fff;">已禁用</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.associated_doctor %}
+                                    <span class="badge" style="background-color: #c6e0fb; color: #000;">{{ user.associated_doctor.name }}</span>
+                                {% else %}
+                                    <span class="badge" style="background-color: #e9ecef; color: #6c757d;">未关联</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                {% if user.last_login %}
+                                    {{ user.last_login.strftime('%Y-%m-%d %H:%M') }}
+                                {% else %}
+                                    <span class="text-muted">从未登录</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <!-- 编辑按钮：所有用户都可以编辑自己，管理员可以编辑普通用户，超级管理员可以编辑所有用户 -->
+                            {% if user.id == current_user.id or (current_user.is_admin and not current_user.is_super_admin and not user.is_admin and not user.is_super_admin) or current_user.is_super_admin %}
+                            <a href="{{ url_for('main.edit_user', user_id=user.id) }}"
+                               class="btn btn-sm btn-outline-secondary" title="编辑"
+                               style="color: #6c757d; border-color: #6c757d;"
+                               onmouseover="this.style.backgroundColor='#0d6efd'; this.style.color='#fff';"
+                               onmouseout="this.style.backgroundColor='transparent'; this.style.color='#6c757d';">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            {% endif %}
+
+                            <!-- 关联管理按钮：普通管理员可以关联其他管理员和普通用户（但不能关联自己），超级管理员可以关联除自己外的所有用户 -->
+                            {% if (current_user.is_admin and not current_user.is_super_admin and user.id != current_user.id) or (current_user.is_super_admin and user.id != current_user.id) %}
+                            {% if user.associated_doctor %}
+                            <a href="{{ url_for('main.associate_doctor', user_id=user.id) }}"
+                               class="btn btn-sm btn-outline-secondary" title="管理医生关联"
+                               style="color: #0d6efd; border-color: #0d6efd;"
+                               onmouseover="this.style.backgroundColor='#0d6efd'; this.style.color='#fff'; this.style.borderColor='#0d6efd';"
+                               onmouseout="this.style.backgroundColor='transparent'; this.style.color='#0d6efd'; this.style.borderColor='#0d6efd';">
+                                <i class="bi bi-person-badge"></i>
+                            </a>
+                            {% else %}
+                            <a href="{{ url_for('main.associate_doctor', user_id=user.id) }}"
+                               class="btn btn-sm btn-outline-secondary" title="管理医生关联"
+                               style="color: #6c757d; border-color: #6c757d;"
+                               onmouseover="this.style.color='#fff'; this.style.backgroundColor='#6c757d';"
+                               onmouseout="this.style.color='#6c757d'; this.style.backgroundColor='transparent';">
+                                <i class="bi bi-person-badge"></i>
+                            </a>
+                            {% endif %}
+                            {% endif %}
+
+                                    {% if user.id != current_user.id %}
+
+                                    <!-- 超级管理员权限管理 -->
+                                    {% if current_user.is_super_admin %}
+                                        {% if user.is_super_admin %}
+                                        <form method="POST" action="{{ url_for('main.toggle_super_admin', user_id=user.id) }}"
+                                              style="display: inline;" onsubmit="return confirm('确定要取消该用户的超级管理员权限吗？')">
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary" title="取消超级管理员"
+                                                    style="color: #dc3545; border-color: #dc3545; position: relative;"
+                                                    onmouseover="this.style.backgroundColor='#dc3545'; this.querySelector('.shield').style.color='#fff'; this.querySelector('.check').style.color='#dc3545'; this.style.borderColor='#dc3545';"
+                                                    onmouseout="this.style.backgroundColor='transparent'; this.querySelector('.shield').style.color='#dc3545'; this.querySelector('.check').style.color='#fff'; this.style.borderColor='#dc3545';">
+                                                <i class="bi bi-shield-fill shield" style="color: #dc3545;"></i>
+                                                <i class="bi bi-check check" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 0.7em; font-weight: bold;"></i>
+                                            </button>
+                                        </form>
+                                        {% else %}
+                                        <form method="POST" action="{{ url_for('main.toggle_super_admin', user_id=user.id) }}"
+                                              style="display: inline;" onsubmit="return confirm('确定要将该用户设为超级管理员吗？')">
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary" title="设为超级管理员"
+                                                    style="color: #6c757d; border-color: #6c757d;"
+                                                    onmouseover="this.style.color='#fff'; this.style.backgroundColor='#6c757d';"
+                                                    onmouseout="this.style.color='#6c757d'; this.style.backgroundColor='transparent';">
+                                                <i class="bi bi-shield-fill-check"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    {% endif %}
+
+                                    <!-- 普通管理员权限管理 - 只有超级管理员可以操作 -->
+                                    {% if current_user.is_super_admin %}
+                                        {% if user.is_admin and not user.is_super_admin %}
+                                            <!-- 目标是普通管理员：超级管理员可以取消权限 -->
+                                            <form method="POST" action="{{ url_for('main.toggle_admin', user_id=user.id) }}"
+                                                  style="display: inline;" onsubmit="return confirm('确定要将该管理员设为普通用户吗？')">
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary" title="取消管理员权限"
+                                                        style="color: #fd7e14; border-color: #6c757d;"
+                                                        onmouseover="this.style.backgroundColor='#fd7e14'; this.style.color='#fff'; this.style.borderColor='#fd7e14';"
+                                                        onmouseout="this.style.backgroundColor='transparent'; this.style.color='#fd7e14'; this.style.borderColor='#6c757d';">
+                                                    <i class="bi bi-shield-fill"></i>
+                                                </button>
+                                            </form>
+                                        {% elif not user.is_admin and not user.is_super_admin %}
+                                            <!-- 目标是普通用户：超级管理员可以设为管理员 -->
+                                            <form method="POST" action="{{ url_for('main.toggle_admin', user_id=user.id) }}"
+                                                  style="display: inline;" onsubmit="return confirm('确定要将该用户设为管理员吗？')">
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary" title="设为管理员"
+                                                        style="color: #6c757d; border-color: #6c757d;"
+                                                        onmouseover="this.style.color='#fff'; this.style.backgroundColor='#6c757d';"
+                                                        onmouseout="this.style.color='#6c757d'; this.style.backgroundColor='transparent';">
+                                                    <i class="bi bi-shield-fill"></i>
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    {% endif %}
+
+                                    <!-- 用户状态管理 -->
+                                    {% if user.is_active %}
+                                        <!-- 只有超级管理员可以禁用管理员，普通管理员只能禁用普通用户 -->
+                                        {% if current_user.is_super_admin or (user.is_admin == False and user.is_super_admin == False) %}
+                                        <form method="POST" action="{{ url_for('main.toggle_user_status', user_id=user.id) }}"
+                                              style="display: inline;" onsubmit="return confirm('确定要禁用该用户吗？')">
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary" title="禁用用户"
+                                                    style="color: #dc3545; border-color: #dc3545;"
+                                                    onmouseover="this.style.backgroundColor='#dc3545'; this.style.color='#fff'; this.style.borderColor='#dc3545';"
+                                                    onmouseout="this.style.backgroundColor='transparent'; this.style.color='#dc3545'; this.style.borderColor='#dc3545';">
+                                                <i class="bi bi-pause-circle"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    {% else %}
+                                        <!-- 只有超级管理员可以启用管理员账户 -->
+                                        {% if current_user.is_super_admin or (user.is_admin == False and user.is_super_admin == False) %}
+                                        <form method="POST" action="{{ url_for('main.toggle_user_status', user_id=user.id) }}"
+                                              style="display: inline;" onsubmit="return confirm('确定要启用该用户吗？')">
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary" title="启用用户"
+                                                    style="color: #198754; border-color: #198754;"
+                                                    onmouseover="this.style.backgroundColor='#198754'; this.style.color='#fff'; this.style.borderColor='#198754';"
+                                                    onmouseout="this.style.backgroundColor='transparent'; this.style.color='#198754'; this.style.borderColor='#198754';">
+                                                <i class="bi bi-play-circle"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    {% endif %}
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 分页 -->
+            {% if users.pages > 1 %}
+            <nav aria-label="用户列表分页" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if users.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('main.users', page=users.prev_num, search=search) }}">
+                                <i class="bi bi-chevron-left"></i> 上一页
+                            </a>
+                        </li>
+                    {% endif %}
+
+                    {% for page_num in users.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != users.page %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('main.users', page=page_num, search=search) }}">
+                                        {{ page_num }}
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if users.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('main.users', page=users.next_num, search=search) }}">
+                                下一页 <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-people display-1 text-muted"></i>
+                <h5 class="text-muted mt-3">
+                    {% if search %}
+                        没有找到匹配的用户
+                    {% else %}
+                        暂无用户数据
+                    {% endif %}
+                </h5>
+                {% if search %}
+                <a href="{{ url_for('main.users') }}" class="btn btn-outline-primary">
+                    <i class="bi bi-arrow-left"></i> 返回全部用户
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

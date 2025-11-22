@@ -1,0 +1,304 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}节假日管理 - 医院排班管理系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面头部 -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="bi bi-calendar-event text-primary"></i>
+            节假日管理
+        </h1>
+        <a href="{{ url_for('schedules.index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 返回排班管理
+        </a>
+    </div>
+
+    <!-- 节假日说明 -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-info-circle"></i>
+                节假日管理说明
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-primary">功能说明：</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="bi bi-check-circle text-success"></i> 手动添加节假日和调休安排</li>
+                        <li><i class="bi bi-check-circle text-success"></i> 节假日日期在排班表中显示为红色</li>
+                        <li><i class="bi bi-check-circle text-success"></i> 支持自定义节假日名称</li>
+                        <li><i class="bi bi-check-circle text-success"></i> 支持调休上班设置</li>
+                        <li><i class="bi bi-check-circle text-success"></i> 支持日期范围批量添加</li>
+                        <li><i class="bi bi-check-circle text-success"></i> 支持删除已添加的节假日</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-success">使用建议：</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="bi bi-lightbulb text-warning"></i> 根据国务院发布的节假日安排手动添加</li>
+                        <li><i class="bi bi-lightbulb text-warning"></i> 调休工作日请选择"调休上班"类型</li>
+                        <li><i class="bi bi-lightbulb text-warning"></i> 法定假日请选择"法定假日"类型</li>
+                        <li><i class="bi bi-lightbulb text-warning"></i> 可以使用日期范围功能批量添加连续假期</li>
+                        <li><i class="bi bi-lightbulb text-warning"></i> 所有节假日安排仅基于数据库记录，确保准确性</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加节假日表单 -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-plus-circle"></i>
+                添加自定义节假日
+            </h5>
+        </div>
+        <div class="card-body">
+            <form id="holidayForm">
+                <div class="row">
+                    <div class="col-md-2">
+                        <label for="holidayDate" class="form-label">开始日期</label>
+                        <input type="date" class="form-control" id="holidayDate" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="holidayEndDate" class="form-label">结束日期</label>
+                        <input type="date" class="form-control" id="holidayEndDate" placeholder="留空则表示当天">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="holidayName" class="form-label">节假日名称</label>
+                        <input type="text" class="form-control" id="holidayName" placeholder="如：春节、国庆节" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="holidayType" class="form-label">类型</label>
+                        <select class="form-select" id="holidayType">
+                            <option value="holiday">法定假日</option>
+                            <option value="workday">调休上班</option>
+                            <option value="custom">自定义</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label><br>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-plus-lg"></i> 添加
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 当前年份节假日列表 -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-calendar-check"></i>
+                {{ current_year }}年节假日列表
+            </h5>
+            <div>
+                <select id="yearSelector" class="form-select d-inline-block" style="width: auto;">
+                    {% for year in years %}
+                    <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>{{ year }}年</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="holidaysTable">
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>星期</th>
+                            <th>节假日名称</th>
+                            <th>类型</th>
+                            <th>来源</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if holidays %}
+                            {% for date_str in holidays|sort %}
+                            <tr>
+                                <td>{{ date_str }}</td>
+                                <td>
+                                    {%- set weekday_list = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"] -%}
+                                    {%- set year = date_str[:4] | int -%}
+                                    {%- set month = date_str[5:7] | int -%}
+                                    {%- set day = date_str[8:10] | int -%}
+                                    {%- set a = (14 - month) // 12 -%}
+                                    {%- set y = year - a -%}
+                                    {%- set m = month + 12 * a - 2 -%}
+                                    {%- set d = (day + y + y // 4 - y // 100 + y // 400 + (31 * m) // 12) % 7 -%}
+                                    {{ weekday_list[d] }}
+                                </td>
+                                <td>{{ holidays[date_str].name }}</td>
+                                <td>
+                                    {% set holiday_type = holidays[date_str].type %}
+                                    {% if holiday_type == 'holiday' %}
+                                        <span class="badge bg-danger">法定假日</span>
+                                    {% elif holiday_type == 'workday' %}
+                                        <span class="badge bg-warning text-dark">调休上班</span>
+                                    {% elif holiday_type == 'custom' %}
+                                        <span class="badge bg-info">自定义</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">未知类型</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% set is_system = holidays[date_str].get('is_system', false) %}
+                                    {% if is_system %}
+                                        系统预设
+                                    {% else %}
+                                        用户添加
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="removeHoliday('{{ date_str }}')">
+                                        <i class="bi bi-trash"></i> 删除
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">数据库中暂无节假日数据</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+  </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 年份选择器变化时刷新页面
+    document.getElementById('yearSelector').addEventListener('change', function() {
+        const selectedYear = this.value;
+        window.location.href = `/schedules/holidays/manage?year=${selectedYear}`;
+    });
+
+    // 节假日表单提交
+    document.getElementById('holidayForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const date = document.getElementById('holidayDate').value;
+        const endDate = document.getElementById('holidayEndDate').value;
+        const name = document.getElementById('holidayName').value;
+        const type = document.getElementById('holidayType').value;
+
+        // 验证结束日期不能早于开始日期
+        if (endDate && endDate < date) {
+            window.GlobalModal.alert('结束日期不能早于开始日期！', '日期错误', 'error');
+            return;
+        }
+
+        // 验证调休上班必须选择周六或周日
+        if (type === 'workday') {
+            // 如果有日期范围，需要验证范围内的每一天都是周末
+            const startDate = new Date(date);
+            const finalDate = endDate ? new Date(endDate) : new Date(date);
+
+            let currentDate = new Date(startDate);
+            let hasWeekday = false;
+
+            while (currentDate <= finalDate) {
+                const dayOfWeek = currentDate.getDay(); // 0=周日, 6=周六
+                if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                    hasWeekday = true;
+                    break;
+                }
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            if (hasWeekday) {
+                window.GlobalModal.alert(
+                    '调休上班只能选择周六或周日！\n\n您选择的日期范围内包含工作日，调休逻辑不成立。',
+                    '日期验证失败',
+                    'error'
+                );
+                return;
+            }
+        }
+
+        // 发送到后端API
+        addHoliday(date, endDate, name, type);
+    });
+
+    // 获取星期名称的辅助函数
+    function getWeekdayName(dayOfWeek) {
+        const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+        return weekdays[dayOfWeek];
+    }
+});
+
+function addHoliday(date, endDate, name, type) {
+    // 添加节假日的AJAX请求
+    fetch('/schedules/holidays/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            date: date,
+            end_date: endDate,  // 添加结束日期
+            name: name,
+            type: type
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.GlobalModal.alert(data.message || '节假日添加成功！', '成功', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            window.GlobalModal.alert('添加失败：' + data.message, '错误', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        window.GlobalModal.alert('添加失败，请稍后重试', '错误', 'error');
+    });
+}
+
+function removeHoliday(date) {
+    window.GlobalModal.confirm(
+        `确定要删除 ${date} 的节假日设置吗？`,
+        '确认删除',
+        function() {
+            // 用户点击确定
+            fetch('/schedules/holidays/remove', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    date: date
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.GlobalModal.alert('删除成功！', '成功', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    window.GlobalModal.alert('删除失败：' + data.message, '错误', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                window.GlobalModal.alert('删除失败，请稍后重试', '错误', 'error');
+            });
+        }
+    );
+}
+
+</script>
+{% endblock %}

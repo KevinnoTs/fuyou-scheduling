@@ -1,0 +1,215 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}用户注册 - 医院排班管理系统{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg">
+                <div class="card-header bg-success text-white text-center">
+                    <h4 class="mb-0">
+                        <i class="bi bi-person-plus"></i>
+                        用户注册
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <!-- 用户名 -->
+                        <div class="mb-3">
+                            <label for="username" class="form-label">
+                                <i class="bi bi-person"></i> 用户名 <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="username" name="username"
+                                   value="{{ request.form.username if request.form else '' }}"
+                                   placeholder="请输入用户名（3-20个字符）" required
+                                   minlength="3" maxlength="20">
+                            <small class="form-text text-muted">用户名将用于登录，请使用字母、数字、下划线</small>
+                        </div>
+
+                        <!-- 全名 -->
+                        <div class="mb-3">
+                            <label for="full_name" class="form-label">
+                                <i class="bi bi-card-text"></i> 姓名
+                            </label>
+                            <input type="text" class="form-control" id="full_name" name="full_name"
+                                   value="{{ request.form.full_name if request.form else '' }}"
+                                   placeholder="请输入真实姓名（可选）">
+                        </div>
+
+                  
+                        <!-- 密码 -->
+                        <div class="mb-3">
+                            <label for="password" class="form-label">
+                                <i class="bi bi-lock"></i> 密码 <span class="text-danger">*</span>
+                            </label>
+                            <input type="password" class="form-control" id="password" name="password"
+                                   placeholder="请输入密码（至少6位）" required
+                                   minlength="6" maxlength="50">
+                            <small class="form-text text-muted">建议使用字母、数字、特殊字符的组合</small>
+                        </div>
+
+                        <!-- 确认密码 -->
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">
+                                <i class="bi bi-lock-fill"></i> 确认密码 <span class="text-danger">*</span>
+                            </label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password"
+                                   placeholder="请再次输入密码" required
+                                   minlength="6" maxlength="50">
+                        </div>
+
+                        <!-- 注册按钮 -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success text-white">
+                                <i class="bi bi-person-plus"></i> 立即注册
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <!-- 登录链接 -->
+                    <div class="text-center">
+                        <p class="mb-0">已有账户？</p>
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-success text-white">
+                            <i class="bi bi-box-arrow-in-right"></i> 立即登录
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 注册说明 -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="bi bi-info-circle text-info"></i> 注册说明
+                    </h6>
+                    <ul class="card-text small text-muted mb-0">
+                        <li>注册成功后即可登录系统，管理医生信息</li>
+                        <li>所有编辑功能需要登录后才能使用</li>
+                        <li>未登录用户只能查看医生信息</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirm_password');
+    const username = document.getElementById('username');
+
+    // 自动聚焦到用户名输入框
+    username.focus();
+
+    // 实时验证用户名格式
+    username.addEventListener('input', function() {
+        const value = this.value;
+        const validPattern = /^[a-zA-Z0-9_]+$/;
+
+        if (value && !validPattern.test(value)) {
+            this.classList.add('is-invalid');
+            if (!document.getElementById('username-help')) {
+                const help = document.createElement('div');
+                help.id = 'username-help';
+                help.className = 'invalid-feedback';
+                help.textContent = '用户名只能包含字母、数字和下划线';
+                this.parentNode.appendChild(help);
+            }
+        } else {
+            this.classList.remove('is-invalid');
+            this.classList.add('is-valid');
+            const help = document.getElementById('username-help');
+            if (help) help.remove();
+        }
+    });
+
+    // 实时验证密码强度
+    password.addEventListener('input', function() {
+        const value = this.value;
+        let strength = 0;
+
+        if (value.length >= 6) strength++;
+        if (value.length >= 10) strength++;
+        if (/[a-z]/.test(value) && /[A-Z]/.test(value)) strength++;
+        if (/[0-9]/.test(value)) strength++;
+        if (/[^a-zA-Z0-9]/.test(value)) strength++;
+
+        // 清除之前的强度显示
+        const existingHelp = this.parentNode.querySelector('.form-text:not(.text-muted)');
+        if (existingHelp) existingHelp.remove();
+
+        const strengthText = ['', '弱', '一般', '中等', '强', '很强'][strength];
+        const strengthColor = ['', 'text-danger', 'text-warning', 'text-info', 'text-success', 'text-primary'][strength];
+
+        if (value && strengthText) {
+            const help = document.createElement('div');
+            help.className = `form-text ${strengthColor}`;
+            help.textContent = `密码强度：${strengthText}`;
+            this.parentNode.appendChild(help);
+        }
+    });
+
+    // 确认密码验证
+    confirmPassword.addEventListener('input', function() {
+        if (this.value && this.value === password.value) {
+            this.classList.remove('is-invalid');
+            this.classList.add('is-valid');
+        } else if (this.value) {
+            this.classList.add('is-invalid');
+            this.classList.remove('is-valid');
+        }
+    });
+
+    // 表单提交验证
+    form.addEventListener('submit', function(e) {
+        const formData = {
+            username: username.value.trim(),
+            password: password.value,
+            confirm_password: confirmPassword.value
+        };
+
+        // 验证用户名
+        if (!formData.username || formData.username.length < 3) {
+            alert('用户名至少需要3个字符');
+            username.focus();
+            e.preventDefault();
+            return;
+        }
+
+        // 验证密码
+        if (formData.password.length < 6) {
+            alert('密码长度至少为6位');
+            password.focus();
+            e.preventDefault();
+            return;
+        }
+
+        // 验证密码确认
+        if (formData.password !== formData.confirm_password) {
+            alert('两次输入的密码不一致');
+            confirmPassword.focus();
+            e.preventDefault();
+            return;
+        }
+
+        // 确认提交
+        e.preventDefault(); // 阻止表单自动提交
+        window.GlobalModal.confirm(
+            '确定要注册账户吗？',
+            '确认注册',
+            function() {
+                // 用户确认，提交表单
+                e.target.submit();
+            }
+        );
+    });
+});
+</script>
+{% endblock %}

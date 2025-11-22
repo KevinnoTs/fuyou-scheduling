@@ -1,0 +1,404 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}编辑用户 - {{ user.username }} - 医院排班管理系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面头部 -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            {% if user.id == current_user.id %}
+                <i class="bi bi-person-circle text-primary"></i>
+                编辑个人资料
+            {% else %}
+                <i class="bi bi-person-gear text-primary"></i>
+                编辑用户 - {{ user.username }}
+            {% endif %}
+        </h1>
+        <div>
+            {% if user.id == current_user.id %}
+                <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> 返回个人资料
+                </a>
+            {% else %}
+                <a href="{{ url_for('main.users') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> 返回用户列表
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- 左侧：编辑表单 -->
+        <div class="col-lg-9">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        {% if user.id == current_user.id %}
+                            <i class="bi bi-person-circle"></i> 个人信息编辑
+                        {% else %}
+                            <i class="bi bi-pencil-square"></i> 编辑用户信息
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- 当前用户信息显示 -->
+                    {% if user.id != current_user.id %}
+                    <div class="alert alert-info mb-4">
+                        <i class="bi bi-info-circle"></i>
+                        当前编辑用户：<strong>{{ user.username }}</strong>
+                    </div>
+                    {% endif %}
+
+                    <form method="POST">
+                        <!-- 基本信息 -->
+                        <div class="mb-4">
+                            <h6 class="text-primary mb-3">
+                                <i class="bi bi-person"></i> 基本信息
+                            </h6>
+
+                            <!-- 用户名（只读） -->
+                            <div class="mb-3">
+                                <label for="username" class="form-label">
+                                    <i class="bi bi-person"></i> 用户名
+                                </label>
+                                <input type="text" class="form-control" id="username" value="{{ user.username }}" readonly>
+                                <small class="form-text text-muted">用户名创建后不可修改</small>
+                            </div>
+
+                            <!-- 姓名 -->
+                            <div class="mb-3">
+                                <label for="full_name" class="form-label">
+                                    <i class="bi bi-card-text"></i> 真实姓名
+                                </label>
+                                <input type="text" class="form-control" id="full_name" name="full_name"
+                                       value="{{ user.full_name or '' }}" placeholder="请输入真实姓名">
+                            </div>
+                        </div>
+
+                        <!-- 权限设置（仅超级管理员可见） -->
+                        {% if current_user.is_super_admin %}
+                        <div class="mb-4">
+                            <h6 class="text-warning mb-3">
+                                <i class="bi bi-shield-check"></i> 权限设置
+                            </h6>
+
+                            <!-- 超级管理员权限（仅超级管理员可以设置） -->
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="is_super_admin" name="is_super_admin"
+                                           {% if user.is_super_admin %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_super_admin">
+                                        <i class="bi bi-crown-fill text-danger"></i>
+                                        超级管理员权限
+                                    </label>
+                                </div>
+                                <small class="form-text text-muted">
+                                    超级管理员拥有系统最高权限，可以管理所有用户和功能
+                                </small>
+                            </div>
+
+                            <!-- 管理员权限（仅超级管理员可以设置） -->
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="is_admin" name="is_admin"
+                                           {% if user.is_admin %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_admin">
+                                        <i class="bi bi-star-fill text-warning"></i>
+                                        管理员权限
+                                    </label>
+                                </div>
+                                <small class="form-text text-muted">
+                                    管理员可以管理医生信息、排班等所有功能
+                                </small>
+                            </div>
+
+                        <!-- 账户状态（仅超级管理员可见） -->
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="is_active" name="is_active"
+                                           {% if user.is_active %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_active">
+                                        <i class="bi bi-toggle-on text-success"></i>
+                                        账户启用
+                                    </label>
+                                </div>
+                                <small class="form-text text-muted">
+                                    禁用后用户将无法登录系统
+                                </small>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- 医生关联信息 -->
+                        <div class="mb-4">
+                            <h6 class="text-info mb-3">
+                                <i class="bi bi-person-badge"></i> 医生关联信息
+                            </h6>
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    {% if user.associated_doctor %}
+                                        <p class="mb-2">
+                                            <strong>当前关联医生：</strong>
+                                            <span class="badge" style="background-color: #c6e0fb; color: #000;">{{ user.associated_doctor.name }}</span>
+                                        </p>
+                                        <p class="mb-0 text-muted">
+                                            <small>关联用户可以编辑该医生的头像信息</small>
+                                        </p>
+                                        {% if current_user.is_super_admin or (current_user.is_admin and not user.is_super_admin) %}
+                                        <div class="mt-3">
+                                            <a href="{{ url_for('main.associate_doctor', user_id=user.id) }}"
+                                               class="btn btn-sm btn-outline-info">
+                                                <i class="bi bi-pencil"></i> 修改关联
+                                            </a>
+                                        </div>
+                                        {% endif %}
+                                    {% else %}
+                                        <p class="mb-2 text-muted">该用户未关联任何医生</p>
+                                        <p class="mb-0">
+                                            {% if current_user.is_super_admin or (current_user.is_admin and not user.is_super_admin) %}
+                                            <a href="{{ url_for('main.associate_doctor', user_id=user.id) }}"
+                                               class="btn btn-sm btn-outline-info">
+                                                <i class="bi bi-plus-circle"></i> 建立关联
+                                            </a>
+                                            {% else %}
+                                                <small class="text-muted">不能管理超级管理员的医生关联</small>
+                                            {% endif %}
+                                        </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 密码管理 -->
+                        {% if current_user.is_super_admin or user.id == current_user.id %}
+                        <div class="mb-4">
+                            <h6 class="
+                                {% if current_user.is_super_admin and user.id != current_user.id %}
+                                    text-danger
+                                {% else %}
+                                    text-info
+                                {% endif %}
+                                mb-3">
+                                <i class="bi bi-key"></i> 密码管理
+                                {% if current_user.is_super_admin and user.id != current_user.id %}
+                                <small class="text-muted">（强制修改他人密码）</small>
+                                {% elif user.id == current_user.id %}
+                                <small class="text-muted">（修改自己密码）</small>
+                                {% endif %}
+                            </h6>
+
+                            <div class="card
+                                {% if current_user.is_super_admin and user.id != current_user.id %}
+                                    border-danger
+                                {% else %}
+                                    border-info
+                                {% endif %}">
+                                <div class="card-header
+                                    {% if current_user.is_super_admin and user.id != current_user.id %}
+                                        bg-danger text-white
+                                    {% else %}
+                                        bg-info text-white
+                                    {% endif %}">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-{% if current_user.is_super_admin and user.id != current_user.id %}shield-check{% else %}key{% endif %}"></i>
+                                        {% if current_user.is_super_admin and user.id != current_user.id %}
+                                            强制修改他人密码
+                                        {% else %}
+                                            修改我的密码
+                                        {% endif %}
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="new_password" class="form-label">
+                                            <i class="bi bi-key"></i> 新密码
+                                        </label>
+                                        <input type="password" class="form-control" id="new_password" name="new_password"
+                                               placeholder="留空则不修改密码" autocomplete="new-password">
+                                        <small class="form-text text-muted">
+                                            {% if current_user.is_super_admin and user.id != current_user.id %}
+                                                如果需要强制修改用户密码，请输入新密码
+                                            {% else %}
+                                                如需修改密码，请输入新密码（至少6位）
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="confirm_password" class="form-label">
+                                            <i class="bi bi-key-fill"></i> 确认密码
+                                        </label>
+                                        <input type="password" class="form-control" id="confirm_password" name="confirm_password"
+                                               placeholder="再次输入新密码" autocomplete="new-password">
+                                    </div>
+                                    </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- 提交按钮 -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-check-circle"></i> 保存更改
+                            </button>
+                            <a href="{{ url_for('main.users') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> 取消
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：信息面板 -->
+        <div class="col-lg-3">
+            {% if current_user.is_admin or current_user.is_super_admin %}
+            <!-- 权限说明（仅管理员可见） -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle"></i> 权限说明
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if current_user.is_super_admin or current_user.is_admin %}
+                    <h6 class="text-primary">普通用户权限：</h6>
+                    <ul class="small">
+                        <li>查看医生信息</li>
+                        <li>修改个人资料和密码</li>
+                        <li>查看排班信息</li>
+                        <li>添加/编辑/删除医生</li>
+                        <li>管理用户权限</li>
+                        <li>若关联医生，可编辑该医生头像</li>
+                    </ul>
+                    {% endif %}
+
+                   <h6 class="text-warning mt-3">管理员权限：</h6>
+                    <ul class="small">
+                        <li>拥有普通用户所有权限</li>
+                        <li>添加/编辑/删除医生</li>
+                        <li>修改年假数据</li>
+                        <li>管理普通用户信息</li>
+                        <li>管理用户-医生关联（除超级管理员）</li>
+                        <li>排班管理</li>
+                    </ul>
+
+                    {% if current_user.is_super_admin %}
+                    <h6 class="text-danger mt-3">超级管理员权限：</h6>
+                    <ul class="small">
+                        <li>拥有管理员所有权限</li>
+                        <li>管理所有用户（包括管理员）</li>
+                        <li>设置/取消管理员权限</li>
+                        <li>设置/取消超级管理员权限</li>
+                        <li>强制修改任何用户密码</li>
+                        <li>启用/禁用用户账户</li>
+                        <li>系统完全控制</li>
+                    </ul>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- 当前用户信息 -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-circle"></i> 用户信息
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <td class="text-muted" style="width: 100px;">用户名：</td>
+                            <td><strong>{{ user.username }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">用户组：</td>
+                            <td>
+                                {% if user.is_super_admin %}
+                                    <span class="badge" style="background-color: #ffd0a6; color: #000;">超级管理员</span>
+                                {% elif user.is_admin %}
+                                    <span class="badge" style="background-color: #ffcdc7; color: #000;">管理员</span>
+                                {% else %}
+                                    <span class="badge" style="background-color: #fce9da; color: #000;">普通用户</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">状态：</td>
+                            <td>
+                                {% if user.is_active %}
+                                    <span class="badge" style="background-color: #b3bf86; color: #fff;">正常</span>
+                                {% else %}
+                                    <span class="badge" style="background-color: #c4c3be; color: #fff;">已禁用</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">医生关联：</td>
+                            <td>
+                                {% if user.associated_doctor %}
+                                    <span class="badge" style="background-color: #c6e0fb; color: #000;">{{ user.associated_doctor.name }}</span>
+                                {% else %}
+                                    <span class="badge" style="background-color: #e9ecef; color: #6c757d;">未关联</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">注册时间：</td>
+                            <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        </tr>
+                        {% if user.last_login %}
+                        <tr>
+                            <td class="text-muted">最后登录：</td>
+                            <td>{{ user.last_login.strftime('%Y-%m-%d %H:%M') }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+
+            </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const isAdminCheckbox = document.getElementById('is_admin');
+    const isActiveCheckbox = document.getElementById('is_active');
+    const form = document.querySelector('form');
+
+    // 表单验证
+    form.addEventListener('submit', function(e) {
+        const fullName = document.getElementById('full_name').value.trim();
+
+        if (!fullName) {
+            alert('请输入真实姓名');
+            document.getElementById('full_name').focus();
+            e.preventDefault();
+            return;
+        }
+    });
+
+    // 权限变更提示
+    isAdminCheckbox.addEventListener('change', function() {
+        {% if user.id != current_user.id %}
+        const action = this.checked ? '设为管理员' : '取消管理员权限';
+        if (!confirm(`确定要${action}吗？这会影响用户的系统权限。`)) {
+            this.checked = !this.checked;
+        }
+        {% endif %}
+    });
+
+    isActiveCheckbox.addEventListener('change', function() {
+        {% if user.id != current_user.id %}
+        const action = this.checked ? '启用' : '禁用';
+        if (!confirm(`确定要${action}该用户吗？`)) {
+            this.checked = !this.checked;
+        }
+        {% endif %}
+    });
+});
+</script>
+{% endblock %}

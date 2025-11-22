@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}医院排班管理系统{% endblock %}</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- 霞鹜新晰黑字体 -->
+    <link href="{{ url_for('static', filename='fonts/font-setup.css') }}" rel="stylesheet">
+    <!-- 自定义CSS -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('main.index') }}">医院排班管理系统</a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.doctors' %}active{% endif %}"
+                           href="{{ url_for('main.doctors') }}">
+                            <i class="bi bi-people"></i> 医生管理
+                        </a>
+                    </li>
+                    {% if current_user.is_authenticated and current_user.is_admin %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.users' %}active{% endif %}"
+                           href="{{ url_for('main.users') }}">
+                            <i class="bi bi-person-gear"></i> 用户管理
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint and 'schedules' in request.endpoint %}active{% endif %}"
+                           href="{{ url_for('schedules.index') }}">
+                            <i class="bi bi-calendar-week"></i> 排班管理
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">工时统计</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">工分统计</a>
+                    </li>
+                </ul>
+
+                <!-- 用户登录区域 -->
+                <ul class="navbar-nav">
+                    {% if current_user.is_authenticated %}
+                        <!-- 已登录用户 -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                               data-bs-toggle="dropdown">
+                                <i class="bi bi-person-circle"></i>
+                                {{ current_user.full_name or current_user.username }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}">
+                                    <i class="bi bi-person"></i> 个人资料
+                                </a></li>
+                                {% if current_user.is_admin %}
+                                <li><a class="dropdown-item" href="{{ url_for('main.users') }}">
+                                    <i class="bi bi-person-gear"></i> 用户管理
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                {% endif %}
+                                <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">
+                                    <i class="bi bi-box-arrow-right"></i> 退出登录
+                                </a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <!-- 未登录用户 -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('auth.register') }}">
+                                <i class="bi bi-person-plus"></i> 注册
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('auth.login') }}">
+                                <i class="bi bi-box-arrow-in-right"></i> 登录
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容区域 -->
+    <div class="container mt-4">
+        <!-- 消息提示 -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'warning' if category == 'warning' else 'success' }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="bg-light text-center text-muted py-3 mt-5">
+        <div class="container">
+            <p class="mb-0">&copy; 2025 医院排班管理系统. All rights reserved. | Powered by <strong>KevinnoTs</strong></p>
+        </div>
+    </footer>
+
+    <!-- 通用弹窗组件 -->
+    <div class="modal fade" id="globalModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title" id="globalModalTitle">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <span id="globalModalTitleText">提示</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="globalModalBody">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i id="globalModalIcon" class="bi bi-info-circle display-4 text-primary"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <p id="globalModalMessage" class="mb-0">消息内容</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0" id="globalModalFooter">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- 全局弹窗脚本 -->
+    <script>
+        // 全局弹窗管理对象
+        window.GlobalModal = {
+            modal: null,
+
+            // 初始化
+            init: function() {
+                this.modal = new bootstrap.Modal(document.getElementById('globalModal'));
+            },
+
+            // 显示弹窗
+            show: function(options) {
+                const defaults = {
+                    title: '提示',
+                    message: '',
+                    type: 'info', // info, success, warning, error
+                    confirmText: '确定',
+                    showConfirm: true,
+                    showCancel: false,
+                    cancelText: '取消',
+                    onConfirm: null,
+                    onCancel: null
+                };
+
+                const settings = Object.assign(defaults, options);
+
+                // 设置标题
+                document.getElementById('globalModalTitleText').textContent = settings.title;
+
+                // 设置图标和颜色
+                const iconElement = document.getElementById('globalModalIcon');
+                iconElement.className = 'bi display-4';
+
+                switch(settings.type) {
+                    case 'success':
+                        iconElement.classList.add('bi-check-circle', 'text-success');
+                        break;
+                    case 'warning':
+                        iconElement.classList.add('bi-exclamation-triangle', 'text-warning');
+                        break;
+                    case 'error':
+                        iconElement.classList.add('bi-x-circle', 'text-danger');
+                        break;
+                    default:
+                        iconElement.classList.add('bi-info-circle', 'text-primary');
+                }
+
+                // 设置消息
+                const messageElement = document.getElementById('globalModalMessage');
+                messageElement.innerHTML = settings.message.replace(/\n/g, '<br>');
+
+                // 设置按钮
+                const footerElement = document.getElementById('globalModalFooter');
+                footerElement.innerHTML = '';
+
+                if (settings.showCancel) {
+                    const cancelButton = document.createElement('button');
+                    cancelButton.type = 'button';
+                    cancelButton.className = 'btn btn-secondary me-2';
+                    cancelButton.textContent = settings.cancelText;
+                    cancelButton.addEventListener('click', () => {
+                        this.modal.hide();
+                        if (settings.onCancel) settings.onCancel();
+                    });
+                    footerElement.appendChild(cancelButton);
+                }
+
+                if (settings.showConfirm) {
+                    const confirmButton = document.createElement('button');
+                    confirmButton.type = 'button';
+                    confirmButton.className = 'btn btn-primary';
+                    confirmButton.textContent = settings.confirmText;
+                    confirmButton.addEventListener('click', () => {
+                        this.modal.hide();
+                        if (settings.onConfirm) settings.onConfirm();
+                    });
+                    footerElement.appendChild(confirmButton);
+                }
+
+                // 显示弹窗
+                this.modal.show();
+            },
+
+            // 简化的alert方法
+            alert: function(message, title, type) {
+                this.show({
+                    title: title || '提示',
+                    message: message,
+                    type: type || 'info'
+                });
+            },
+
+            // 确认对话框
+            confirm: function(message, title, onConfirm, onCancel) {
+                this.show({
+                    title: title || '确认',
+                    message: message,
+                    type: 'warning',
+                    showConfirm: true,
+                    showCancel: true,
+                    confirmText: '确定',
+                    cancelText: '取消',
+                    onConfirm: onConfirm,
+                    onCancel: onCancel
+                });
+            }
+        };
+
+        // 替换原生alert和confirm
+        window.nativeAlert = window.alert;
+        window.nativeConfirm = window.confirm;
+
+        window.alert = function(message, title, type) {
+            if (window.GlobalModal && window.GlobalModal.modal) {
+                window.GlobalModal.alert(message, title, type);
+            } else {
+                window.nativeAlert(message);
+            }
+        };
+
+        window.confirm = function(message, title, onConfirm, onCancel) {
+            if (window.GlobalModal && window.GlobalModal.modal) {
+                if (typeof onConfirm === 'function') {
+                    // 新式调用：confirm(message, title, onConfirm, onCancel)
+                    window.GlobalModal.confirm(message, title, onConfirm, onCancel);
+                    return true; // 返回true阻止默认行为，实际结果由回调处理
+                } else {
+                    // 传统调用：confirm(message) 用于事件处理
+                    let result = false;
+                    window.GlobalModal.confirm(
+                        message,
+                        title || '确认操作',
+                        function() { result = true; },
+                        function() { result = false; }
+                    );
+
+                    // 阻止当前操作并等待用户选择
+                    // 这里需要同步等待，但弹窗是异步的
+                    // 我们需要返回false来阻止默认行为，然后在确认时触发相应操作
+                    return false; // 总是返回false，需要手动处理
+                }
+            } else {
+                return window.nativeConfirm(message);
+            }
+        };
+
+        // 添加一个同步确认函数，专门用于表单提交
+        window.syncConfirm = function(message, title, callback) {
+            if (window.GlobalModal && window.GlobalModal.modal) {
+                window.GlobalModal.confirm(
+                    message,
+                    title || '确认操作',
+                    function() {
+                        if (callback) callback(true);
+                    },
+                    function() {
+                        if (callback) callback(false);
+                    }
+                );
+            } else {
+                const result = window.nativeConfirm(message);
+                if (callback) callback(result);
+            }
+        };
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.GlobalModal) {
+                window.GlobalModal.init();
+            }
+        });
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
