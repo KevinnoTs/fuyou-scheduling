@@ -1,53 +1,18 @@
+{# Template updated for schedules.index fix #}
 {% extends "layouts/base.html" %}
 
 {% block title %}节假日管理 - 妇幼排班管理系统{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
     <!-- 页面头部 -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>
-            <i class="bi bi-calendar-event text-primary"></i>
+        <h2>
+            <i class="bi bi-calendar-event text-primary me-2"></i>
             节假日管理
-        </h1>
-        <a href="{{ url_for('schedules.index') }}" class="btn btn-outline-secondary">
+        </h2>
+        <a href="{{ url_for('main.schedules') }}" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left"></i> 返回排班管理
         </a>
-    </div>
-
-    <!-- 节假日说明 -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-info text-white">
-            <h5 class="mb-0">
-                <i class="bi bi-info-circle"></i>
-                节假日管理说明
-            </h5>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <h6 class="text-primary">功能说明：</h6>
-                    <ul class="list-unstyled">
-                        <li><i class="bi bi-check-circle text-success"></i> 手动添加节假日和调休安排</li>
-                        <li><i class="bi bi-check-circle text-success"></i> 节假日日期在排班表中显示为红色</li>
-                        <li><i class="bi bi-check-circle text-success"></i> 支持自定义节假日名称</li>
-                        <li><i class="bi bi-check-circle text-success"></i> 支持调休上班设置</li>
-                        <li><i class="bi bi-check-circle text-success"></i> 支持日期范围批量添加</li>
-                        <li><i class="bi bi-check-circle text-success"></i> 支持删除已添加的节假日</li>
-                    </ul>
-                </div>
-                <div class="col-md-6">
-                    <h6 class="text-success">使用建议：</h6>
-                    <ul class="list-unstyled">
-                        <li><i class="bi bi-lightbulb text-warning"></i> 根据国务院发布的节假日安排手动添加</li>
-                        <li><i class="bi bi-lightbulb text-warning"></i> 调休工作日请选择"调休上班"类型</li>
-                        <li><i class="bi bi-lightbulb text-warning"></i> 法定假日请选择"法定假日"类型</li>
-                        <li><i class="bi bi-lightbulb text-warning"></i> 可以使用日期范围功能批量添加连续假期</li>
-                        <li><i class="bi bi-lightbulb text-warning"></i> 所有节假日安排仅基于数据库记录，确保准确性</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- 添加节假日表单 -->
@@ -94,18 +59,16 @@
 
     <!-- 当前年份节假日列表 -->
     <div class="card shadow-sm">
-        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+        <div class="card-header bg-success text-white">
             <h5 class="mb-0">
                 <i class="bi bi-calendar-check"></i>
-                {{ current_year }}年节假日列表
-            </h5>
-            <div>
-                <select id="yearSelector" class="form-select d-inline-block" style="width: auto;">
+                <select id="yearSelector" class="form-select d-inline-block me-2" style="width: auto;">
                     {% for year in years %}
                     <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>{{ year }}年</option>
                     {% endfor %}
                 </select>
-            </div>
+                节假日列表
+            </h5>
         </div>
         <div class="card-body">
             <div class="table-responsive">
@@ -174,8 +137,6 @@
             </div>
         </div>
     </div>
-
-  </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

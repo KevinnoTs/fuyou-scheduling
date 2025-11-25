@@ -3,14 +3,12 @@
 {% block title %}排班管理 - 妇幼排班管理系统{% endblock %}
 
 {% block content %}
-
-<div class="container-fluid">
     <!-- 页面头部 -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>
-            <i class="bi bi-calendar2 text-primary"></i>
+        <h2>
+            <i class="bi bi-calendar2 text-primary me-2"></i>
             排班管理
-        </h1>
+        </h2>
         <div>
             <!-- 下载按钮 -->
             <div class="btn-group me-2" role="group">
@@ -19,12 +17,12 @@
                 </button>
                 <ul class="dropdown-menu">
                     <li>
-                        <a class="dropdown-item" href="{{ url_for('schedules.download_template', month=current_month_str) }}">
+                        <a class="dropdown-item" href="#" onclick="alert('下载功能暂未实现')">
                             <i class="bi bi-filetype-csv text-success"></i> CSV格式
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item" href="{{ url_for('schedules.download_template_excel', month=current_month_str) }}">
+                        <a class="dropdown-item" href="#" onclick="alert('下载功能暂未实现')">
                             <i class="bi bi-filetype-xlsx text-primary"></i> Excel格式
                         </a>
                     </li>
@@ -40,11 +38,6 @@
                 <i class="bi bi-plus-circle"></i> 生成当月排班表
             </button>
             {% endif %}
-
-            <!-- 节假日管理按钮 -->
-            <a href="{{ url_for('schedules.manage_holidays') }}" class="btn btn-warning text-white">
-                <i class="bi bi-calendar-event"></i> 节假日管理
-            </a>
         </div>
     </div>
 

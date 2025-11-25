@@ -1,0 +1,319 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}添加用户 - 用户管理 - 妇幼排班管理系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面头部 -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="bi bi-person-plus text-primary me-2"></i>
+            添加用户
+        </h2>
+        <a href="{{ url_for('main.users') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 返回用户管理
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- 左侧：添加用户表单 -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-plus"></i>
+                        创建新用户账户
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <!-- 基本信息 -->
+                        <div class="mb-4">
+                            <h6 class="text-primary mb-3">
+                                <i class="bi bi-person"></i> 基本信息
+                            </h6>
+
+                            <!-- 用户名 -->
+                            <div class="mb-3">
+                                <label for="username" class="form-label">
+                                    <i class="bi bi-person"></i> 用户名 <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="username" name="username"
+                                       value="{{ request.form.username if request.form else '' }}"
+                                       placeholder="请输入用户名（3-20个字符）" required
+                                       minlength="3" maxlength="20">
+                                <small class="form-text text-muted">用户名将用于登录，请使用字母、数字、下划线</small>
+                            </div>
+
+                            <!-- 真实姓名 -->
+                            <div class="mb-3">
+                                <label for="full_name" class="form-label">
+                                    <i class="bi bi-card-text"></i> 真实姓名
+                                </label>
+                                <input type="text" class="form-control" id="full_name" name="full_name"
+                                       value="{{ request.form.full_name if request.form else '' }}"
+                                       placeholder="请输入真实姓名">
+                            </div>
+                        </div>
+
+                        <!-- 权限设置 -->
+                        {% if current_user.is_super_admin %}
+                        <div class="mb-4">
+                            <h6 class="text-warning mb-3">
+                                <i class="bi bi-shield-check"></i> 权限设置
+                            </h6>
+
+                            <!-- 管理员权限 -->
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="is_admin" name="is_admin"
+                                           {% if request.form.is_admin %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_admin">
+                                        <i class="bi bi-star-fill text-warning"></i>
+                                        管理员权限
+                                    </label>
+                                </div>
+                                <small class="form-text text-muted">
+                                    管理员可以管理医生信息、排班、用户等所有功能
+                                </small>
+                            </div>
+
+                            <!-- 超级管理员权限 -->
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="is_super_admin" name="is_super_admin"
+                                           {% if request.form.is_super_admin %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_super_admin">
+                                        <i class="bi bi-crown-fill text-danger"></i>
+                                        超级管理员权限
+                                    </label>
+                                </div>
+                                <small class="form-text text-muted">
+                                    超级管理员拥有系统最高权限，可以管理所有用户和功能
+                                </small>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- 密码设置 -->
+                        <div class="mb-4">
+                            <h6 class="text-info mb-3">
+                                <i class="bi bi-key"></i> 密码设置
+                            </h6>
+
+                            <!-- 密码 -->
+                            <div class="mb-3">
+                                <label for="password" class="form-label">
+                                    <i class="bi bi-lock"></i> 初始密码 <span class="text-danger">*</span>
+                                </label>
+                                <input type="password" class="form-control" id="password" name="password"
+                                       placeholder="请输入初始密码（至少6位）" required
+                                       minlength="6" maxlength="50">
+                                <small class="form-text text-muted">建议使用字母、数字、特殊字符的组合</small>
+                            </div>
+
+                            <!-- 确认密码 -->
+                            <div class="mb-3">
+                                <label for="confirm_password" class="form-label">
+                                    <i class="bi bi-lock-fill"></i> 确认密码 <span class="text-danger">*</span>
+                                </label>
+                                <input type="password" class="form-control" id="confirm_password" name="confirm_password"
+                                       placeholder="请再次输入密码" required
+                                       minlength="6" maxlength="50">
+                            </div>
+                        </div>
+
+                        <!-- 提交按钮 -->
+                        <div class="d-grid gap-2 d-md-flex">
+                            <button type="submit" class="btn btn-primary text-white flex-fill">
+                                <i class="bi bi-person-plus"></i> 创建用户
+                            </button>
+                            <a href="{{ url_for('main.users') }}" class="btn btn-outline-secondary flex-fill">
+                                <i class="bi bi-x-circle"></i> 取消
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：信息面板 -->
+        <div class="col-lg-4">
+            <!-- 创建说明 -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle"></i> 创建说明
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6 class="text-primary">用户权限说明：</h6>
+                    <ul class="small">
+                        <li><strong>普通用户</strong>：查看医生信息、修改个人资料</li>
+                        <li><strong>管理员</strong>：拥有普通用户所有权限 + 管理医生、排班、用户</li>
+                        {% if current_user.is_super_admin %}
+                        <li><strong>超级管理员</strong>：拥有所有权限，包括管理其他管理员</li>
+                        {% endif %}
+                    </ul>
+
+                    <h6 class="text-warning mt-3">注意事项：</h6>
+                    <ul class="small text-muted">
+                        <li>用户名创建后不可修改</li>
+                        <li>初始密码可由用户首次登录后自行修改</li>
+                        <li>请谨慎分配管理员权限</li>
+                        <li>创建后可在用户管理中修改权限</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 权限检查 -->
+            {% if current_user.is_super_admin %}
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-shield-check"></i> 您的权限
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">
+                        <i class="bi bi-crown-fill text-danger"></i>
+                        您是<strong>超级管理员</strong>，可以创建任何权限级别的用户
+                    </p>
+                </div>
+            </div>
+            {% elif current_user.is_admin %}
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-star-fill"></i> 您的权限
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">
+                        <i class="bi bi-star-fill text-warning"></i>
+                        您是<strong>管理员</strong>，只能创建普通用户
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirm_password');
+    const username = document.getElementById('username');
+
+    // 自动聚焦到用户名输入框
+    username.focus();
+
+    // 实时验证用户名格式
+    username.addEventListener('input', function() {
+        const value = this.value;
+        const validPattern = /^[a-zA-Z0-9_]+$/;
+
+        if (value && !validPattern.test(value)) {
+            this.classList.add('is-invalid');
+            if (!document.getElementById('username-help')) {
+                const help = document.createElement('div');
+                help.id = 'username-help';
+                help.className = 'invalid-feedback';
+                help.textContent = '用户名只能包含字母、数字和下划线';
+                this.parentNode.appendChild(help);
+            }
+        } else {
+            this.classList.remove('is-invalid');
+            this.classList.add('is-valid');
+            const help = document.getElementById('username-help');
+            if (help) help.remove();
+        }
+    });
+
+    // 实时验证密码强度
+    password.addEventListener('input', function() {
+        const value = this.value;
+        let strength = 0;
+
+        if (value.length >= 6) strength++;
+        if (value.length >= 10) strength++;
+        if (/[a-z]/.test(value) && /[A-Z]/.test(value)) strength++;
+        if (/[0-9]/.test(value)) strength++;
+        if (/[^a-zA-Z0-9]/.test(value)) strength++;
+
+        // 清除之前的强度显示
+        const existingHelp = this.parentNode.querySelector('.form-text:not(.text-muted)');
+        if (existingHelp) existingHelp.remove();
+
+        const strengthText = ['', '弱', '一般', '中等', '强', '很强'][strength];
+        const strengthColor = ['', 'text-danger', 'text-warning', 'text-info', 'text-success', 'text-primary'][strength];
+
+        if (value && strengthText) {
+            const help = document.createElement('div');
+            help.className = `form-text ${strengthColor}`;
+            help.textContent = `密码强度：${strengthText}`;
+            this.parentNode.appendChild(help);
+        }
+    });
+
+    // 确认密码验证
+    confirmPassword.addEventListener('input', function() {
+        if (this.value && this.value === password.value) {
+            this.classList.remove('is-invalid');
+            this.classList.add('is-valid');
+        } else if (this.value) {
+            this.classList.add('is-invalid');
+            this.classList.remove('is-valid');
+        }
+    });
+
+    // 表单提交验证
+    form.addEventListener('submit', function(e) {
+        const formData = {
+            username: username.value.trim(),
+            password: password.value,
+            confirm_password: confirmPassword.value
+        };
+
+        // 验证用户名
+        if (!formData.username || formData.username.length < 3) {
+            alert('用户名至少需要3个字符');
+            username.focus();
+            e.preventDefault();
+            return;
+        }
+
+        // 验证密码
+        if (formData.password.length < 6) {
+            alert('密码长度至少为6位');
+            password.focus();
+            e.preventDefault();
+            return;
+        }
+
+        // 验证密码确认
+        if (formData.password !== formData.confirm_password) {
+            alert('两次输入的密码不一致');
+            confirmPassword.focus();
+            e.preventDefault();
+            return;
+        }
+
+        // 确认提交
+        e.preventDefault(); // 阻止表单自动提交
+        window.GlobalModal.confirm(
+            `确定要创建用户 "${formData.username}" 吗？`,
+            '确认创建',
+            function() {
+                // 用户确认，提交表单
+                e.target.submit();
+            }
+        );
+    });
+});
+</script>
+{% endblock %}

@@ -43,11 +43,19 @@
                     </li>
                     {% endif %}
                     <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint and 'schedules' in request.endpoint %}active{% endif %}"
-                           href="{{ url_for('schedules.index') }}">
+                        <a class="nav-link {% if request.endpoint == 'main.schedules' %}active{% endif %}"
+                           href="{{ url_for('main.schedules') }}">
                             <i class="bi bi-calendar-week"></i> 排班管理
                         </a>
                     </li>
+                    {% if current_user.is_authenticated and (current_user.is_admin or current_user.is_super_admin) %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'holidays.manage_holidays' %}active{% endif %}"
+                           href="{{ url_for('holidays.manage_holidays') }}">
+                            <i class="bi bi-calendar-event"></i> 节假日管理
+                        </a>
+                    </li>
+                    {% endif %}
                     <li class="nav-item">
                         <a class="nav-link" href="#">工时统计</a>
                     </li>
@@ -74,6 +82,11 @@
                                 <li><a class="dropdown-item" href="{{ url_for('main.users') }}">
                                     <i class="bi bi-person-gear"></i> 用户管理
                                 </a></li>
+                                {% if current_user.is_admin or current_user.is_super_admin %}
+                                <li><a class="dropdown-item" href="{{ url_for('holidays.manage_holidays') }}">
+                                    <i class="bi bi-calendar-event"></i> 节假日管理
+                                </a></li>
+                                {% endif %}
                                 <li><hr class="dropdown-divider"></li>
                                 {% endif %}
                                 <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">

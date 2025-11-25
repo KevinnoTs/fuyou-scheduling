@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
 from flask_login import login_required, current_user
-from app.models import Doctor, Specialty, User
+from datetime import datetime, timedelta
+from app.models import Doctor, Specialty, User, Schedule
 from app.extensions import db
 from app.utils import save_avatar, delete_avatar, admin_required, editor_required, super_admin_required
 import os
@@ -10,7 +11,107 @@ main = Blueprint('main', __name__)
 @main.route('/')
 def index():
     """首页 - 默认显示当月排班"""
-    return redirect(url_for('schedules.index'))
+    return redirect(url_for('main.schedules'))
+
+# ========== 排班管理相关路由 ==========
+
+@main.route('/schedules')
+@main.route('/schedules/')
+def schedules():
+    """排班管理主页 - 显示当月排班表"""
+    # 获取选择的月份，默认为当前月 - 限制最小年份为2025
+    current_year = datetime.now().year
+    month_str = request.args.get('month')
+    if month_str:
+        year, month = map(int, month_str.split('-'))
+        # 确保年份不早于2025
+        if year < 2025:
+            year = 2025
+    else:
+        year, month = max(2025, current_year), datetime.now().month
+
+    # 获取该月的第一天和最后一天
+    first_day = datetime(year, month, 1)
+    if month == 12:
+        last_day = datetime(year + 1, 1, 1) - timedelta(days=1)
+    else:
+        last_day = datetime(year, month + 1, 1) - timedelta(days=1)
+
+    # 查询该月的所有排班
+    schedules = Schedule.query.filter(
+        Schedule.date >= first_day.date(),
+        Schedule.date <= last_day.date()
+    ).order_by(Schedule.date, Schedule.time_range).all()
+
+    # 获取可用医生列表
+    available_doctors = Doctor.query.filter_by(status='在职').all()
+
+    # 生成年份选项
+    years = list(range(max(2025, current_year), current_year + 5))
+
+    # 生成月份选项
+    months = [(i, f"{i}月") for i in range(1, 13)]
+
+    # 计算统计数据
+    stats = {
+        'total_schedules': len(schedules),
+        'monthly_schedules': len(schedules),
+        'assigned_schedules': len([s for s in schedules if s.doctor_id]),
+        'unassigned_schedules': len([s for s in schedules if not s.doctor_id]),
+        'active_doctors': len(available_doctors)
+    }
+
+    # 月份信息
+    month_info = {
+        'year': year,
+        'month': month
+    }
+
+    # 格式化当前月份供输入框使用
+    current_month = f"{year}-{month:02d}"
+    current_month_str = current_month
+
+    # 为template.html准备额外的变量
+    selected_year = year
+    selected_month = month
+
+    # 生成月份选项（包含value和name）
+    months_options = []
+    for i in range(1, 13):
+        months_options.append({
+            'value': f"{year}-{i:02d}",
+            'name': f"{i}月"
+        })
+
+    # 生成日期列表和星期列表（简化版）
+    import calendar
+    dates = []
+    weekdays = []
+    cal = calendar.monthcalendar(year, month)
+    for week in cal:
+        for day in week:
+            if day != 0:  # 0表示不是该月的日期
+                dates.append(f"{year}-{month:02d}-{day:02d}")
+                weekdays.append(calendar.day_name[calendar.weekday(year, month, day)])
+
+    return render_template('schedules/template.html',
+                         year=year,
+                         month=month,
+                         current_month=current_month,
+                         current_month_str=current_month_str,
+                         years=years,
+                         months=months_options,  # 使用新的月份选项
+                         schedules=schedules,
+                         available_doctors=available_doctors,
+                         first_day=first_day,
+                         last_day=last_day,
+                         stats=stats,
+                         month_info=month_info,
+                         selected_year=selected_year,
+                         selected_month=selected_month,
+                         dates=dates,
+                         weekdays=weekdays,
+                         holiday_helper=type('HolidayHelper', (), {'is_holiday': lambda x, y=None: False})())
 
 # ========== 医生管理相关路由 ==========
 
@@ -445,6 +546,83 @@ def users():
     )
 
     return render_template('users/index.html', users=users, search=search)
+
+@main.route('/users/add', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def add_user():
+    """添加用户"""
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
+        full_name = request.form.get('full_name', '').strip()
+        is_admin = request.form.get('is_admin') == 'on'
+        is_super_admin = request.form.get('is_super_admin') == 'on'
+
+        # 表单验证
+        error = None
+        if not username:
+            error = '请输入用户名'
+        elif len(username) < 3:
+            error = '用户名至少需要3个字符'
+        elif not password:
+            error = '请输入密码'
+        elif len(password) < 6:
+            error = '密码长度至少为6位'
+        elif password != confirm_password:
+            error = '两次输入的密码不一致'
+
+        # 权限验证：只有超级管理员可以创建管理员和超级管理员
+        if not current_user.is_super_admin and (is_admin or is_super_admin):
+            error = '只有超级管理员可以创建管理员用户'
+
+        if error:
+            flash(error, 'error')
+            return render_template('users/add_user.html',
+                                 username=username,
+                                 full_name=full_name,
+                                 is_admin=is_admin,
+                                 is_super_admin=is_super_admin)
+
+        # 检查用户名是否已存在
+        if User.query.filter_by(username=username).first():
+            flash('用户名已存在', 'error')
+            return render_template('users/add_user.html',
+                                 username=username,
+                                 full_name=full_name,
+                                 is_admin=is_admin,
+                                 is_super_admin=is_super_admin)
+
+        # 创建新用户
+        try:
+            user = User(
+                username=username,
+                full_name=full_name,
+                is_admin=is_admin,
+                is_super_admin=is_super_admin,
+                is_active=True
+            )
+            user.set_password(password)
+
+            db.session.add(user)
+            db.session.commit()
+
+            # 确定用户角色描述
+            role = "普通用户"
+            if is_super_admin:
+                role = "超级管理员"
+            elif is_admin:
+                role = "管理员"
+
+            flash(f'用户 "{username}" 创建成功！角色：{role}', 'success')
+            return redirect(url_for('main.users'))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f'创建用户失败：{str(e)}', 'error')
+
+    return render_template('users/add_user.html')
 
 @main.route('/users/<int:user_id>/edit', methods=['GET', 'POST'])
 @login_required

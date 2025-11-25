@@ -5,6 +5,7 @@ from flask_login import LoginManager
 def create_app():
     app = Flask(__name__)
 
+    
     # 配置
     app.config['SECRET_KEY'] = 'fuyou-scheduling-secret-key-2024'
 
@@ -41,9 +42,10 @@ def create_app():
     from app.auth_routes import auth
     app.register_blueprint(auth, url_prefix='/auth')
 
-    # 注册排班管理蓝图
-    from app.schedule_routes import schedule_bp
-    app.register_blueprint(schedule_bp)
+    
+    # 注册节假日管理蓝图
+    from app.holidays_routes import holidays_bp
+    app.register_blueprint(holidays_bp, url_prefix='/')
 
     # 注册调试路由
     try:

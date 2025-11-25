@@ -3,13 +3,18 @@
 {% block title %}用户管理 - 妇幼排班管理系统{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
     <!-- 页面头部 -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>
-            <i class="bi bi-people-fill text-primary"></i>
+        <h2>
+            <i class="bi bi-people text-primary me-2"></i>
             用户管理
-        </h1>
+        </h2>
+        <!-- 添加用户按钮 - 只有管理员和超级管理员可以看到 -->
+        {% if current_user.is_authenticated and (current_user.is_admin or current_user.is_super_admin) %}
+        <a href="{{ url_for('main.add_user') }}" class="btn btn-primary text-white">
+            <i class="bi bi-person-plus"></i> 添加用户
+        </a>
+        {% endif %}
     </div>
 
     <!-- 搜索框 -->
@@ -276,5 +281,4 @@
             {% endif %}
         </div>
     </div>
-</div>
 {% endblock %}

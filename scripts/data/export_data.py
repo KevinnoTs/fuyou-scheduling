@@ -39,10 +39,17 @@ except ImportError as e:
     print(f"   sys.path.append(r'{project_root}')")
     sys.exit(1)
 
+def validate_date_format(date_str):
+    """验证日期格式是否符合标准：无前导零，统一空格"""
+    import re
+    # 匹配格式：year, month, day - 其中month和day没有前导零
+    pattern = r'^\d{4}, \s*\d{1,2},\s*\d{1,2}\s*$'
+    return bool(re.match(pattern, date_str))
+
 def export_all_data():
     """导出所有数据为分离的初始化脚本"""
-    print("🔄 开始导出数据库数据...")
-    print(f"📍 项目根目录: {project_root}")
+    print("开始导出数据库数据...")
+    print(f"项目根目录: {project_root}")
 
     try:
         app = create_app()
@@ -58,25 +65,25 @@ def export_all_data():
             # 导出用户数据
             export_users_data()
 
-            print("\n✅ 所有数据导出完成!")
-            print("📁 生成的文件:")
+            print("\n所有数据导出完成!")
+            print("生成的文件:")
             print("   - holidays_init_data.py  (节假日数据)")
             print("   - doctors_init_data.py   (医生数据)")
             print("   - users_init_data.py     (用户数据)")
     except Exception as e:
-        print(f"❌ 导出失败: {e}")
+        print(f"导出失败: {e}")
         import traceback
         traceback.print_exc()
 
 def export_holidays_data():
     """导出节假日数据为初始化脚本"""
-    print("\n📅 导出节假日数据...")
+    print("\n导出节假日数据...")
 
     # 获取所有节假日数据
     holidays = Holiday.query.order_by(Holiday.date).all()
 
     if not holidays:
-        print("   ⚠️  没有找到节假日数据")
+        print("   没有找到节假日数据")
         return
 
     # 按年份分组统计
@@ -96,13 +103,13 @@ def export_holidays_data():
 
 def export_doctors_data():
     """导出医生数据为初始化脚本"""
-    print("\n👨‍⚕️  导出医生数据...")
+    print("\n导出医生数据...")
 
     # 获取所有医生（包括在职和离职）
     doctors = Doctor.query.order_by(Doctor.sequence).all()
 
     if not doctors:
-        print("   ⚠️  没有找到医生数据")
+        print("   没有找到医生数据")
         return
 
     print(f"   找到 {len(doctors)} 名医生")
@@ -119,13 +126,13 @@ def export_doctors_data():
 
 def export_users_data():
     """导出用户数据为初始化脚本"""
-    print("\n👤 导出用户数据...")
+    print("\n导出用户数据...")
 
     # 获取所有用户
     users = User.query.order_by(User.id).all()
 
     if not users:
-        print("   ⚠️  没有找到用户数据")
+        print("   没有找到用户数据")
         return
 
     print(f"   找到 {len(users)} 个用户")
@@ -150,6 +157,11 @@ def generate_holidays_init_file(holidays, years):
     init_code.append('"""')
     init_code.append('节假日初始化数据')
     init_code.append(f'导出时间: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
+    init_code.append('')
+    init_code.append('数据格式说明:')
+    init_code.append('- 日期格式: date(year, month, day) - 统一使用无前导零格式')
+    init_code.append('- 示例: date(2025, 1, 1) 表示2025年1月1日')
+    init_code.append('- 空格格式: 日期参数间保持一致的空格分隔')
     init_code.append('')
 
     # 添加年份统计信息
@@ -186,8 +198,20 @@ def generate_holidays_init_file(holidays, years):
         init_code.append('    holidays = [')
 
         for holiday in year_holidays:
-            date_str = holiday.date.strftime('%Y, %m, %d')
-            init_code.append(f'        (date({date_str}), "{holiday.name}", "{holiday.type}", {str(holiday.is_system)}),')
+            # 统一日期格式：确保没有前导零，保持一致的空格格式
+            year = holiday.date.year
+            month = holiday.date.month
+            day = holiday.date.day
+
+            # 格式化日期字符串，确保统一格式：date(year, month, day)
+            date_str = f'{year}, {month}, {day}'
+
+            # 确保类型值是标准的小写格式
+            holiday_type = holiday.type.lower()
+            # 布尔值使用Python标准格式（首字母大写）
+            is_system_value = str(holiday.is_system)
+
+            init_code.append(f'        (date({date_str}), "{holiday.name}", "{holiday_type}", {is_system_value}),')
 
         init_code.append('    ]')
         init_code.append('')
@@ -240,12 +264,12 @@ def generate_holidays_init_file(holidays, years):
     init_code.append('    with app.app_context():')
     init_code.append('        check_holidays_data()')
 
-    # 写入文件到项目根目录
-    output_path = os.path.join(project_root, output_file)
+    # 写入文件到 scripts/data 目录
+    output_path = os.path.join(os.path.dirname(__file__), output_file)
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write('\n'.join(init_code))
 
-    print(f"   ✅ 节假日数据已导出到: {output_path}")
+    print(f"   节假日数据已导出到: {output_path}")
 
 def generate_doctors_init_file(doctors):
     """生成医生初始化脚本"""
@@ -256,6 +280,11 @@ def generate_doctors_init_file(doctors):
     init_code.append('医生初始化数据')
     init_code.append(f'导出时间: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
     init_code.append(f'包含 {len(doctors)} 名医生数据')
+    init_code.append('')
+    init_code.append('数据格式说明:')
+    init_code.append('- specialties: JSON数组格式，自动避免引号嵌套问题')
+    init_code.append('- avatar: 字符串或None值')
+    init_code.append('- 状态注释: 显示医生当前在职状态')
     init_code.append('"""')
     init_code.append('')
     init_code.append('import json')
@@ -280,14 +309,14 @@ def generate_doctors_init_file(doctors):
 
     for doctor in doctors:
         specialties_json = json.dumps(doctor.get_specialties_list(), ensure_ascii=False)
-        avatar = f'"{doctor.avatar}"' if doctor.avatar else 'null'
+        avatar = f'"{doctor.avatar}"' if doctor.avatar else 'None'
 
         doctor_data = f'''        {{
             "name": "{doctor.name}",
             "gender": "{doctor.gender}",
             "title": "{doctor.title}",
             "status": "{doctor.status}",
-            "specialties": "{specialties_json}",
+            "specialties": {specialties_json},
             "annual_leave_days": {doctor.annual_leave_days},
             "used_leave_days": {doctor.used_leave_days},
             "avatar": {avatar},
@@ -331,12 +360,12 @@ def generate_doctors_init_file(doctors):
     init_code.append('    with app.app_context():')
     init_code.append('        init_doctors()')
 
-    # 写入文件到项目根目录
-    output_path = os.path.join(project_root, output_file)
+    # 写入文件到 scripts/data 目录
+    output_path = os.path.join(os.path.dirname(__file__), output_file)
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write('\n'.join(init_code))
 
-    print(f"   ✅ 医生数据已导出到: {output_path}")
+    print(f"   医生数据已导出到: {output_path}")
 
 def generate_users_init_file(users):
     """生成用户初始化脚本"""
@@ -347,6 +376,11 @@ def generate_users_init_file(users):
     init_code.append('用户初始化数据')
     init_code.append(f'导出时间: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
     init_code.append(f'包含 {len(users)} 个用户数据')
+    init_code.append('')
+    init_code.append('数据格式说明:')
+    init_code.append('- password_hash: 哈希密码，保持原始格式')
+    init_code.append('- associated_doctor_id: 关联医生ID或None')
+    init_code.append('- 医生关联注释: 显示关联医生的姓名和状态')
     init_code.append('"""')
     init_code.append('')
     init_code.append('import os')
@@ -372,7 +406,8 @@ def generate_users_init_file(users):
         # 获取关联医生姓名
         associated_doctor_name = ""
         if user.associated_doctor_id:
-            doctor = Doctor.query.get(user.associated_doctor_id)
+            from app.extensions import db
+            doctor = db.session.get(Doctor, user.associated_doctor_id)
             if doctor:
                 associated_doctor_name = f',  # 关联医生: {doctor.name} ({doctor.status})'
 
@@ -382,7 +417,7 @@ def generate_users_init_file(users):
             "full_name": "{user.full_name}",
             "is_admin": {str(user.is_admin).lower()},
             "is_super_admin": {str(user.is_super_admin).lower()},
-            "associated_doctor_id": {user.associated_doctor_id if user.associated_doctor_id else 'null'},
+            "associated_doctor_id": {user.associated_doctor_id if user.associated_doctor_id else 'None'},
             "is_active": {str(user.is_active).lower()}
         }}{associated_doctor_name}'''
 
@@ -424,12 +459,12 @@ def generate_users_init_file(users):
     init_code.append('    with app.app_context():')
     init_code.append('        init_users()')
 
-    # 写入文件到项目根目录
-    output_path = os.path.join(project_root, output_file)
+    # 写入文件到 scripts/data 目录
+    output_path = os.path.join(os.path.dirname(__file__), output_file)
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write('\n'.join(init_code))
 
-    print(f"   ✅ 用户数据已导出到: {output_path}")
+    print(f"   用户数据已导出到: {output_path}")
 
 if __name__ == "__main__":
     export_all_data()
